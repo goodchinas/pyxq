@@ -96,6 +96,7 @@ ENV/
 .ropeproject
 
 # ide settings
+.idea
 .vscode
 
 # mkdocs documentation
@@ -103,3 +104,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+sy/
+.
+.gitignore
+README.MD
+examples
+build
