@@ -2,9 +2,9 @@ from collections import defaultdict
 import typing as t
 from ..obj import event as e
 
+KeyType = t.TypeVar(name='KeyType', bound=int)
 EventType = t.TypeVar(name='EventType', bound=e.Event)
-KeyType = t.TypeVar('KeyType', bound=int)
-CallBackType = t.Callable[[EventType], None]
+CallBackType = t.Callable[[], None]
 
 
 class CallBack(object):
@@ -29,7 +29,7 @@ class CallBack(object):
         if callback in call_back_list:
             call_back_list.remove(callback)
         else:
-            raise ValueError('call back function is not in the X center.')
+            raise ValueError('call back function is not in the manage center.')
 
     def route(self, event: EventType):
         if event.key in self._callbacks:
