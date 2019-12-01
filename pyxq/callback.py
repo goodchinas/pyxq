@@ -1,15 +1,16 @@
-from collections import defaultdict
 import typing as t
-from ..obj import event as e
+from collections import defaultdict
+
+import pyxq.obj
 
 KeyType = t.TypeVar(name='KeyType', bound=int)
-EventType = t.TypeVar(name='EventType', bound=e.Event)
+EventType = t.TypeVar(name='EventType', bound=pyxq.obj.base.Event)
 CallBackType = t.Callable[[], None]
 
 
 class CallBack(object):
     """
-    manage the callbacks and event.
+    manage the callbacks and obj.
     """
     _callbacks: t.Dict[KeyType, t.List[CallBackType]]
 
