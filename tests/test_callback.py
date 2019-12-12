@@ -1,39 +1,32 @@
+import dataclasses as dc
 from unittest import TestCase
 
-import pyxq.callback
-import pyxq.obj
-import pyxq.obj.base
+import pyxq.base
 from pyxq import callback as cb
 
 
-class ServerMsg(pyxq.obj.base.Event):
+@dc.dataclass
+class ServerMsg(pyxq.base.Msg):
     text: str
-
-    def __init__(self, text: str):
-        super().__init__()
-        self.text = text
 
     pass
 
 
-class ClientMsg(pyxq.obj.base.Event):
+@dc.dataclass
+class ClientMsg(pyxq.base.Msg):
     text: str
-
-    def __init__(self, text: str):
-        super().__init__()
-        self.text = text
 
     pass
 
 
 class Server(object):
-    def __init__(self, callback: pyxq.callback.CallBack):
+    def __init__(self, callback: cb.CallBack):
         self.callback = callback
-        self.callback.bind(ClientMsg.cls_key(), self.show)
+        self.callback.bind(ClientMsg.key, self.show)
         pass
 
     def show(self, msg: ClientMsg):
-        print(self, msg)
+        print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
         self.callback.route(ServerMsg(msg))
@@ -42,13 +35,13 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, callback: pyxq.callback.CallBack):
+    def __init__(self, callback: cb.CallBack):
         self.callback = callback
-        self.callback.bind(ServerMsg.cls_key(), self.show)
+        self.callback.bind(ServerMsg.key, self.show)
         pass
 
     def show(self, msg: ServerMsg):
-        print(self, msg)
+        print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
         self.callback.route(ClientMsg(msg))
@@ -58,7 +51,7 @@ class Client(object):
 
 class TestCallBack(TestCase):
     def test_callback(self):
-        x = pyxq.callback.CallBack()
+        x = cb.CallBack()
         client = None
         server = None
         for i in range(3):

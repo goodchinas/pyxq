@@ -2,7 +2,7 @@
 
 language: python
 python:
-  - 3.7
+    - 3.7
 #  - 3.6
 #  - 3.5
 #  - 3.4
@@ -18,12 +18,12 @@ script: tox
 # following command to finish PyPI deployment setup:
 # $ travis encrypt --add deploy.password
 deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: goodchinas
-  password:
-    secure: ev0EC9xUUEFich/cxirwjcSY+yOU4RIRtEKQb1dBhrbNi18s4XcqTOXzC8ZA5xHYOcbOu83o0K9t7gjLCLK2GoJ6ERjHXdXFvoBFXINouy0mtByZ5p+INEU2giIHqXQO0tpn/gVoR2hKEAti972pWs2d3rUQLUXwUtpGQozzr0edD4/EY7AyuCdC6Wacv2ON0J52Z9X58CgRqP3hWpyeMknWogqAl6jTLUYNcndFa+T3Phasb5EKTlITgbbEtUscGYTZ3ASL4GUR98DfTqlAGi2ne1PHqRqkkEDnFWQH1JsN5qHsKppFGFjBSyhlS0bYD6aEMR4aQs2H0VkeuM3uIgp1g+csOXLIvFywKEfV9sx19jz+QgwuZa3Fv6aNdxbBw/5vaeKDlMuwLrhFmrmvm5ZkkkQ7+kSTvnXlUvC0KvPvT6UT97IHr1ZjDizRB3tZXqGwXz5fj3ZnAauUrVKjCGlyzytkkTyFnxDQx7BUXoG8DmVbpvcIdcnDewD6OdJ2HSSlVWq87mJbe7UQxYa5fE9Bgezhpzp0iFz31j+12d1id9fnsvE43ZWYfnyyY9kAcPJIocmVU2sghwxTpIhXH8p4UHg0NEoXbh09djYiRZP/OTVNWCLoY6E5xJTNBmperS84rT/k1fFi2bkAfordQTILP02A7tOOH4lbdsOjc/I=
-  on:
-    tags: true
-    repo: goodchinas/pyxq
-    python: 3.7
+    provider: pypi
+    distributions: sdist bdist_wheel
+    user: goodchinas
+    password:
+        secure: ev0EC9xUUEFich/cxirwjcSY+yOU4RIRtEKQb1dBhrbNi18s4XcqTOXzC8ZA5xHYOcbOu83o0K9t7gjLCLK2GoJ6ERjHXdXFvoBFXINouy0mtByZ5p+INEU2giIHqXQO0tpn/gVoR2hKEAti972pWs2d3rUQLUXwUtpGQozzr0edD4/EY7AyuCdC6Wacv2ON0J52Z9X58CgRqP3hWpyeMknWogqAl6jTLUYNcndFa+T3Phasb5EKTlITgbbEtUscGYTZ3ASL4GUR98DfTqlAGi2ne1PHqRqkkEDnFWQH1JsN5qHsKppFGFjBSyhlS0bYD6aEMR4aQs2H0VkeuM3uIgp1g+csOXLIvFywKEfV9sx19jz+QgwuZa3Fv6aNdxbBw/5vaeKDlMuwLrhFmrmvm5ZkkkQ7+kSTvnXlUvC0KvPvT6UT97IHr1ZjDizRB3tZXqGwXz5fj3ZnAauUrVKjCGlyzytkkTyFnxDQx7BUXoG8DmVbpvcIdcnDewD6OdJ2HSSlVWq87mJbe7UQxYa5fE9Bgezhpzp0iFz31j+12d1id9fnsvE43ZWYfnyyY9kAcPJIocmVU2sghwxTpIhXH8p4UHg0NEoXbh09djYiRZP/OTVNWCLoY6E5xJTNBmperS84rT/k1fFi2bkAfordQTILP02A7tOOH4lbdsOjc/I=
+    on:
+        tags: true
+        repo: goodchinas/pyxq
+        python: 3.7

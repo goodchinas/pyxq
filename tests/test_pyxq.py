@@ -3,10 +3,7 @@
 
 """Tests for `pyxq` package."""
 
-
 import unittest
-
-from pyxq import pyxq
 
 
 class TestPyxq(unittest.TestCase):

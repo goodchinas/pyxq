@@ -1,16 +1,18 @@
-import unittest
-
-import pyxq.callback
-import pyxq.obj
-import pyxq.obj.md
-import pyxq.obj.order
-import pyxq.obj.trade
-from pyxq import service as s, callback as cb, const as c
-from datetime import datetime
-import pandas as pd
-from collections import deque
 import typing as t
+import unittest
+from collections import deque
+from datetime import datetime
+
 import numpy as np
+import pandas as pd
+
+import pyxq.actor
+import pyxq.callback
+import pyxq.msg
+import pyxq.msg.md
+import pyxq.msg.trade
+import pyxq.service
+from pyxq import actor as s, const as c
 
 
 class MaSignal(deque):
@@ -33,7 +35,7 @@ class MaSignal(deque):
         return 0
 
 
-class Strategy(s.GateWay):
+class Strategy(pyxq.actor.GateWay):
     signal: MaSignal
 
     def __init__(self, broker: pyxq.callback.CallBack):
@@ -41,18 +43,18 @@ class Strategy(s.GateWay):
         self.signal = MaSignal(20)
         pass
 
-    def on_kline(self, k: pyxq.obj.md.Kline):
+    def on_kline(self, k: pyxq.msg.md.Kline):
         _x = self.signal.append(k.close)
         if _x > 0:
-            self.broker.route(pyxq.obj.order.OrderEvent(pyxq.obj.order.OrderLimit(
-                symbol=k.symbol, oc=c.OC.O, price=k.close, order_num=100, )
-            ))
+            self.broker.route(pyxq.msg.trade.Limit(
+                symbol=k.symbol, oc=c.OC.O, price=k.close, order_num=100, dt=k.dt)
+            )
         elif _x < 0:
-            self.broker.route(pyxq.obj.order.OrderEvent(pyxq.obj.order.OrderLimit(
-                symbol=k.symbol, oc=c.OC.C, price=k.close, order_num=-100, )
-            ))
+            self.broker.route(pyxq.msg.trade.Limit(
+                symbol=k.symbol, oc=c.OC.C, price=k.close, order_num=-100, dt=k.dt)
+            )
 
-    def on_trade(self, t: pyxq.obj.trade.Trade):
+    def on_trade(self, t: pyxq.msg.trade.Trade):
         print(self.__class__.__name__, t.symbol, t.volume, t.price)
         pass
 
@@ -62,14 +64,14 @@ class Strategy(s.GateWay):
 def run():
     # 构建框架
     strategy = Strategy(broker=pyxq.callback.CallBack())
-    exchange = s.Exchange(broker=pyxq.callback.CallBack())
-    broker = s.Broker(gateway=strategy.broker, exchange=exchange.broker)
+    exchange = pyxq.actor.Exchange(broker=pyxq.callback.CallBack())
+    broker = pyxq.actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 读取数据
     symbol = '000002'
     data = pd.read_csv(f'data/{symbol}.csv')
     # 行情事件
     for i, d in data[-100:].iterrows():
-        exchange.broker.route(pyxq.obj.md.Kline(
+        exchange.broker.route(pyxq.msg.md.Kline(
             symbol=symbol,
             dt=datetime.strptime(d.timestamp, '%Y-%m-%d'),
             open=d.open,
