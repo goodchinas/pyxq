@@ -1,53 +1,102 @@
-import pyxq.base
-import pyxq.callback
-from pyxq.msg import md, trade
+import typing as tp
+from .. import base
+from .. import cb
+from ..msg import md, td, pa
+from ..service import account
 
 
-class GateWay(pyxq.base.Actor):
+class GateWay(base.Actor):
     """
     中间网关/代理服务：对接行情和交易
     """
-    broker: pyxq.callback.CallBack
+    broker: cb.CallBack
 
-    def __init__(self, broker: pyxq.callback.CallBack):
+    def __init__(self, broker: cb.CallBack):
         broker.bind(md.Kline.key, self.on_kline)
-        broker.bind(trade.Trade.key, self.on_trade)
+        broker.bind(td.Trade.key, self.on_trade)
         self.broker = broker
         pass
 
     def on_kline(self, k: md.Kline):
         pass
 
-    def on_trade(self, t: trade.Trade):
+    def on_trade(self, t: td.Trade):
         pass
 
     pass
 
 
-class Broker(pyxq.base.Actor):
+class KLine(base.Actor):
+    broker: cb.CallBack
+    gateway: cb.CallBack
+    ks: tp.Dict[str, md.Kline]
+
+    def __init__(self, broker: cb.CallBack, gateway: cb.CallBack):
+        broker.bind(md.Tick.key, self.on_tick)
+        self.broker = broker
+        self.gateway = gateway
+
+    def on_tick(self, x: md.Tick):
+        _p = x.trade.price
+        if x.symbol not in self.ks or self.ks[x.symbol].dt.date() != x.dt.date():
+            self.ks[x.symbol] = md.Kline(symbol=x.symbol, dt=x.dt, open=_p, high=_p, low=_p,
+                                         close=_p, volume=x.trade.num)
+        else:
+            _k = self.ks[x.symbol]
+            _k.high = max(_k.high, _p)
+            _k.low = min(_k.low, _p)
+            _k.close = _p
+            _k.volume += x.trade.num
+        pass
+
+    def on_settle(self, x: td.Settle):
+        for i in self.ks.values():
+            i.dt = x.dt
+            self.gateway.route(i)
+
+
+class Broker(base.Actor):
     """
     账户维护：网关/代理右侧，模拟类服务。
     订单、仓位、资产和绩效分析
     存储仓位，不需要存储委托和成交（缓存都数据中心一份）
-    todo **账户服务，多账户数据**
-        维护账户（组），绩效分析的模块
     """
-    gateway: pyxq.callback.CallBack
-    exchange: pyxq.callback.CallBack
+    gateway: cb.CallBack
+    exchange: cb.CallBack
+    acc: account.Account
 
-    def __init__(self, gateway: pyxq.callback.CallBack, exchange: pyxq.callback.CallBack):
-        gateway.bind(trade.Limit.key, self.on_order)
-        exchange.bind(trade.Trade.key, self.on_trade)
+    def __init__(self, gateway: cb.CallBack, exchange: cb.CallBack):
+        gateway.bind(td.Limit.key, self.on_order)
+        gateway.bind(td.Market.key, self.on_order)
+        exchange.bind(td.Trade.key, self.on_trade)
         exchange.bind(md.Kline.key, self.on_kline)
         self.gateway = gateway
         self.exchange = exchange
+        self.acc = account.Account()
 
-    def on_order(self, o: trade.Limit):
+    def on_canceled(self, x: td.Canceled):
+        self.acc.on_canceled(x=x)
+
+    def on_cash(self, x: pa.Cash):
+        self.acc.on_cash(x=x)
+
+    def on_commission(self, x: pa.Commission):
+        self.acc.on_commission(x=x)
+
+    def on_contract(self, x: pa.Contract):
+        self.acc.on_contract(x=x)
+
+    def on_ordered(self, x: td.Ordered):
+        self.acc.on_ordered(x=x)
+
+    # def on
+
+    def on_order(self, o: td.Order):
         print(self.__class__.__name__, o)
         self.exchange.route(o)
         pass
 
-    def on_trade(self, t: trade.Trade):
+    def on_trade(self, t: td.Trade):
         print(self.__class__.__name__, t)
         self.gateway.route(t)
         pass
@@ -59,25 +108,24 @@ class Broker(pyxq.base.Actor):
     pass
 
 
-class Exchange(pyxq.base.Actor):
+class Exchange(base.Actor):
     """
     交易所，接受订单、交易撮合、发布行情
     """
-    broker: pyxq.callback.CallBack
+    broker: cb.CallBack
 
-    def __init__(self, broker: pyxq.callback.CallBack):
-        broker.bind(trade.Limit.key, self.on_order)
+    def __init__(self, broker: cb.CallBack):
+        broker.bind(td.Limit.key, self.on_order)
+        broker.bind(td.Market.key, self.on_order)
         self.broker = broker
 
-    def on_order(self, o: trade.Limit):
+    def on_order(self, o: td.Order):
         print(self.__class__.__name__, o)
         self.broker.route(
-            trade.Trade(
-                order_id=str(o.id),
-                symbol=o.symbol,
-                oc=o.oc,
+            td.Trade(
+                order=o,
                 price=o.price,
-                volume=o.order_num,
+                num=o.order_num,
                 dt=o.dt
             )
         )

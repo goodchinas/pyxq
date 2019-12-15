@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 
 import pyxq.actor
-import pyxq.callback
+import pyxq.cb
 import pyxq.msg
 import pyxq.msg.md
-import pyxq.msg.trade
+import pyxq.msg.td
 import pyxq.service
 from pyxq import actor as s, const as c
 
@@ -38,7 +38,7 @@ class MaSignal(deque):
 class Strategy(pyxq.actor.GateWay):
     signal: MaSignal
 
-    def __init__(self, broker: pyxq.callback.CallBack):
+    def __init__(self, broker: pyxq.cb.CallBack):
         super().__init__(broker=broker)
         self.signal = MaSignal(20)
         pass
@@ -46,16 +46,16 @@ class Strategy(pyxq.actor.GateWay):
     def on_kline(self, k: pyxq.msg.md.Kline):
         _x = self.signal.append(k.close)
         if _x > 0:
-            self.broker.route(pyxq.msg.trade.Limit(
+            self.broker.route(pyxq.msg.td.Limit(
                 symbol=k.symbol, oc=c.OC.O, price=k.close, order_num=100, dt=k.dt)
             )
         elif _x < 0:
-            self.broker.route(pyxq.msg.trade.Limit(
+            self.broker.route(pyxq.msg.td.Limit(
                 symbol=k.symbol, oc=c.OC.C, price=k.close, order_num=-100, dt=k.dt)
             )
 
-    def on_trade(self, t: pyxq.msg.trade.Trade):
-        print(self.__class__.__name__, t.symbol, t.volume, t.price)
+    def on_trade(self, t: pyxq.msg.td.Trade):
+        print(self.__class__.__name__, t.order.symbol, t.num, t.price)
         pass
 
     pass
@@ -63,8 +63,8 @@ class Strategy(pyxq.actor.GateWay):
 
 def run():
     # 构建框架
-    strategy = Strategy(broker=pyxq.callback.CallBack())
-    exchange = pyxq.actor.Exchange(broker=pyxq.callback.CallBack())
+    strategy = Strategy(broker=pyxq.cb.CallBack())
+    exchange = pyxq.actor.Exchange(broker=pyxq.cb.CallBack())
     broker = pyxq.actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 读取数据
     symbol = '000002'

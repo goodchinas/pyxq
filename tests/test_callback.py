@@ -1,8 +1,8 @@
 import dataclasses as dc
 from unittest import TestCase
-
+from datetime import datetime
 import pyxq.base
-from pyxq import callback as cb
+from pyxq import cb as cb
 
 
 @dc.dataclass
@@ -29,7 +29,7 @@ class Server(object):
         print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
-        self.callback.route(ServerMsg(msg))
+        self.callback.route(ServerMsg(dt=datetime.now(),text=msg))
 
     pass
 
@@ -44,7 +44,7 @@ class Client(object):
         print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
-        self.callback.route(ClientMsg(msg))
+        self.callback.route(ClientMsg(dt=datetime.now(),text=msg))
 
     pass
 

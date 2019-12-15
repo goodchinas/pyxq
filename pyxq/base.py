@@ -1,5 +1,6 @@
 import dataclasses as dc
 import uuid
+from datetime import datetime
 
 
 class Actor(object):
@@ -23,6 +24,7 @@ class Msg(object):
     """
     key: int = dc.field(default=None, init=False, repr=False)
     id: str = dc.field(default_factory=lambda: str(uuid.uuid1()), init=False, repr=False)
+    dt: datetime
 
     def __init_subclass__(cls, **kwargs):
         cls.key = hash(cls)
