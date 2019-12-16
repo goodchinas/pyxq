@@ -68,7 +68,7 @@ def run():
     broker = pyxq.actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 读取数据
     symbol = '000002'
-    data = pd.read_csv(f'./data/{symbol}.csv')
+    data = pd.read_csv(rf'data/{symbol}.csv')
     # 行情事件
     for i, d in data[-100:].iterrows():
         exchange.broker.route(pyxq.msg.md.Kline(
