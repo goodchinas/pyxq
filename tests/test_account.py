@@ -11,7 +11,7 @@ from datetime import datetime
 class TestAccount(TestCase):
     def test_account(self):
         a = account.Account()
-        cash, symbol = 100000, '000001'
+        cash, symbol = 100000, '000002'
         a.on_cash(pa.Cash(num=cash, dt=datetime.now()))
         a.on_contract(pa.Contract(symbol=symbol, num_per_unit=100, value_per_dot=1, margin_ratio=1, dt=datetime.now()))
         a.on_commission(
