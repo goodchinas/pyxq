@@ -15,7 +15,7 @@ requirements = []
 
 setup_requirements = []
 
-test_requirements = []
+test_requirements = ["numpy",'pandas']
 
 setup(
     author="tim",
