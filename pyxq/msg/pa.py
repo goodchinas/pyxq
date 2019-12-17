@@ -62,8 +62,8 @@ class CommissionStockA(Commission):
     min_commission: float
 
     def get(self, c: Contract, ts: tp.Deque[td.Trade]) -> float:
-        return sum([(t.num * t.price * c.value_per_dot * self.tax if t.order.oc == const.OC.C else 0) +
-                    max(self.min_commission, t.num * t.price * c.value_per_dot * self.commission)
+        return sum([(abs(t.num) * t.price * c.value_per_dot * self.tax if t.num < 0 else 0) +
+                    max(self.min_commission, abs(t.num) * t.price * c.value_per_dot * self.commission)
                     for t in ts])
 
     pass
@@ -85,7 +85,7 @@ class SlippageFix(Slippage):
     step: float
 
     def get(self, c: Contract, o: td.Order, price) -> float:
-        return price + (self.step if o.order_num > 0 else -self.step)
+        return price + (self.step if o.num > 0 else -self.step)
 
     pass
 
@@ -95,6 +95,6 @@ class SlippagePer(Slippage):
     rate: float
 
     def get(self, c: Contract, o: td.Order, price) -> float:
-        return price * (1 + self.rate * (1 if o.order_num > 0 else -1))
+        return price * (1 + self.rate * (1 if o.num > 0 else -1))
 
     pass

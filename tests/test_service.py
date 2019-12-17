@@ -46,12 +46,12 @@ class Strategy(pyxq.actor.GateWay):
     def on_kline(self, k: pyxq.msg.md.Kline):
         _x = self.signal.append(k.close)
         if _x > 0:
-            self.broker.route(pyxq.msg.td.Limit(
-                symbol=k.symbol, oc=c.OC.O, price=k.close, order_num=100, dt=k.dt)
+            self.broker.route(pyxq.msg.td.Order(
+                symbol=k.symbol, oc=c.OC.O, price=k.close, num=100, dt=k.dt)
             )
         elif _x < 0:
-            self.broker.route(pyxq.msg.td.Limit(
-                symbol=k.symbol, oc=c.OC.C, price=k.close, order_num=-100, dt=k.dt)
+            self.broker.route(pyxq.msg.td.Order(
+                symbol=k.symbol, oc=c.OC.C, price=k.close, num=-100, dt=k.dt)
             )
 
     def on_trade(self, t: pyxq.msg.td.Trade):

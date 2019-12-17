@@ -66,7 +66,7 @@ class Broker(base.Actor):
     acc: account.Account
 
     def __init__(self, gateway: cb.CallBack, exchange: cb.CallBack):
-        gateway.bind(td.Limit.key, self.on_order)
+        gateway.bind(td.Order.key, self.on_order)
         gateway.bind(td.Market.key, self.on_order)
         exchange.bind(td.Trade.key, self.on_trade)
         exchange.bind(md.Kline.key, self.on_kline)
@@ -115,7 +115,7 @@ class Exchange(base.Actor):
     broker: cb.CallBack
 
     def __init__(self, broker: cb.CallBack):
-        broker.bind(td.Limit.key, self.on_order)
+        broker.bind(td.Order.key, self.on_order)
         broker.bind(td.Market.key, self.on_order)
         self.broker = broker
 
@@ -125,7 +125,7 @@ class Exchange(base.Actor):
             td.Trade(
                 order=o,
                 price=o.price,
-                num=o.order_num,
+                num=o.num,
                 dt=o.dt
             )
         )

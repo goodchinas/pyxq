@@ -8,84 +8,39 @@ from ..msg import td, pa, md
 
 @dc.dataclass
 class Position(base.Service, tp.Deque[td.Trade]):
-    symbol: str
     price: float = dc.field(init=False, default=0)
-    frozen: float = dc.field(init=False, default=0)
 
     def close(self, x: td.Trade, y: pa.Contract) -> float:
         self.price = x.price
-        self.frozen -= x.num
         _volume = x.num
         _profit = 0
         _t = None
-        while _volume > 0:
+        while _volume * x.bs > 0:
             if abs(self[0].num) > abs(_volume):
                 _t = self[0]
-                _t.num -= _volume
+                _t.num += _volume
                 _profit += y.get_value(value=_volume * (x.price - _t.price))
                 _volume = 0
             else:
                 _t = self.popleft()
                 _profit += y.get_value(value=_t.num * (x.price - _t.price))
-                _volume -= _t.num
+                _volume += _t.num
         return _profit
 
     def open(self, x: td.Trade) -> None:
         self.price = x.price
         self.append(x)
 
-    def on_trade(self, x: td.Trade):
-        if x.order.oc == ct.OC.C:
-            self.frozen -= x.num
-
-    def on_ordered(self, x: td.Ordered):
-        if x.order.oc == ct.OC.C:
-            self.frozen += x.order.order_num
-
-    def on_canceled(self, x: td.Canceled):
-        if x.order.oc == ct.OC.C:
-            self.frozen -= x.num
-
-    def on_rejected(self, x: td.Rejected):
-        if x.order.oc == ct.OC.C:
-            self.frozen -= x.num
-
-    def get_profit(self, x: pa.Contract) -> float:
-        return x.get_value(
-            value=
-            sum([t.num for t in self]) * self.price -
-            sum([t.num * t.price for t in self])
-        )
-
-    def get_margin(self, x: pa.Contract) -> float:
-        return x.get_margin(value=sum([t.num for t in self]) * self.price)
-
 
 @dc.dataclass
 class Order(base.Service, tp.Deque[td.Trade]):
     order: td.Order
-
-    def on_trade(self, x: td.Trade) -> None:
-        self.append(x)
-        self.order.trade_num += x.num
-
-    def on_rejected(self, x: td.Rejected) -> None:
-        self.order.reject_nm += x.num
-
-    def on_canceled(self, x: td.Canceled):
-        self.order.cancel_nm += x.num
-
-    def get_commission(self, x: pa.Commission, y: pa.Contract) -> float:
-        return x.get(c=y, ts=self)
-
-    def get_frozen(self, x: pa.Contract) -> float:
-        return x.get_margin(
-            value=self.ing * self.order.price
-        ) if self.order.oc == ct.OC.O else 0.0
+    cancel_nm: float = dc.field(init=False, default=0)  # 取消
+    reject_nm: float = dc.field(init=False, default=0)  # 拒绝
 
     @property
     def ing(self) -> float:
-        return self.order.order_num - (self.order.trade_num + self.order.cancel_nm + self.order.reject_nm)
+        return self.order.num - (sum([i.num for i in self]) + self.cancel_nm + self.reject_nm)
 
     @property
     def ok(self) -> bool:
@@ -105,20 +60,30 @@ class Account(base.Service):
     contracts: tp.Dict[str, pa.Contract] = dc.field(default_factory=dict, init=False)
     commissions: tp.Dict[str, pa.Commission] = dc.field(default_factory=dict, init=False)
     orders: tp.Dict[str, Order] = dc.field(default_factory=dict, init=False)
-    positions: tp.DefaultDict[float, tp.Dict[str, Position]] = dc.field(
-        default_factory=lambda: defaultdict(dict), init=False)
+    positions: tp.DefaultDict[float, tp.DefaultDict[str, Position]] = dc.field(
+        default_factory=lambda: defaultdict(lambda: defaultdict(Position)), init=False)
 
     @property
     def margin(self) -> float:
-        return sum([p.get_margin(x=self.contracts[p.symbol]) for i in self.positions.values() for p in i.values()])
+        return sum([
+            self.contracts[t.order.symbol].get_margin(t.price * t.num)
+            for i in self.positions.values() for p in i.values() for t in p
+        ])
 
     @property
     def profit(self) -> float:
-        return sum([p.get_profit(x=self.contracts[p.symbol]) for i in self.positions.values() for p in i.values()])
+        return sum([
+            self.contracts[t.order.symbol].get_value((p.price - t.price) * t.num)
+            for i in self.positions.values() for p in i.values() for t in p
+        ])
 
     @property
     def frozen(self):
-        return sum([i.get_frozen(x=self.contracts[i.order.symbol]) for i in self.orders.values()])
+        return sum([
+            self.contracts[i.order.symbol].get_margin(i.ing * i.order.price)
+            for i in self.orders.values() if i.order.oc == ct.OC.O
+        ])
+
 
     @property
     def equity(self) -> float:
@@ -131,7 +96,7 @@ class Account(base.Service):
     @property
     def commission(self) -> float:
         return sum([
-            i.get_commission(x=self.commissions[i.order.symbol], y=self.contracts[i.order.symbol])
+            self.commissions[i.order.symbol].get(c=self.contracts[i.order.symbol], ts=i)
             for i in self.orders.values() if i.ok
         ])
 
@@ -142,40 +107,29 @@ class Account(base.Service):
 
     def on_ordered(self, x: td.Ordered):
         self.orders[x.order.id] = Order(order=x.order)
-        if x.order.oc == ct.OC.C:
-            self.positions[x.order.bs][x.order.symbol].on_ordered(x=x)
 
     def on_trade(self, x: td.Trade):
-        if x.order.symbol not in self.positions[x.bs]:
-            self.positions[x.bs][x.order.symbol] = Position(symbol=x.order.symbol)
-        _position = self.positions[x.bs][x.order.symbol]
         if x.order.oc == ct.OC.O:
-            _position.open(x=x)
+            self.positions[x.bs][x.order.symbol].open(x=x)
         else:
-            self.cash += _position.close(x=x, y=self.contracts[x.order.symbol])
-            _position.on_trade(x=x)
-            if len(_position) == 0:
-                del self.positions[x.bs][x.order.symbol]
-        self.orders[x.order.id].on_trade(x)
-
+            _p = self.positions[-x.bs][x.order.symbol]
+            self.cash += _p.close(x=x, y=self.contracts[x.order.symbol])
+            if len(_p) == 0:
+                del self.positions[-x.bs][x.order.symbol]
+        self.orders[x.order.id].append(x)
         self._order_rtn(x.order)
 
     def on_canceled(self, x: td.Canceled):
-        self.orders[x.order.id].on_canceled(x)
+        self.orders[x.order.id].cancel_nm += x.num
         self._order_rtn(x.order)
-        if x.order.oc == ct.OC.C:
-            self.positions[x.order.bs][x.order.symbol].on_canceled(x=x)
 
     def on_rejected(self, x: td.Rejected):
-        self.orders[x.order.id].on_rejected(x)
+        self.orders[x.order.id].reject_nm += x.num
         self._order_rtn(x.order)
-        if x.order.oc == ct.OC.C:
-            self.positions[x.order.bs][x.order.symbol].on_rejected(x=x)
 
     def _order_rtn(self, x: td.Order):
         if self.orders[x.id].ok:
-            self.cash -= self.orders[x.id].get_commission(x=self.commissions[x.symbol],
-                                                          y=self.contracts[x.symbol])
+            self.cash -= self.commissions[x.symbol].get(c=self.contracts[x.symbol], ts=self.orders[x.id])
 
     def on_tick(self, x: md.Tick):
         for i in self.positions.values():

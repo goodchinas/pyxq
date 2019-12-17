@@ -27,14 +27,11 @@ class Order(Info):
     symbol: str
     oc: const.OC
     price: float
-    order_num: float  # 委托
-    trade_num: float = dc.field(init=False, default=0)  # 成交
-    cancel_nm: float = dc.field(init=False, default=0)  # 取消
-    reject_nm: float = dc.field(init=False, default=0)  # 拒绝
+    num: float
 
     @property
     def bs(self) -> float:
-        return np.sign(self.order_num)
+        return np.sign(self.num)
 
 
 @dc.dataclass
