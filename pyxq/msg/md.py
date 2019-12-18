@@ -8,7 +8,7 @@ from . import td
 
 
 @dc.dataclass
-class Info(base.Msg):
+class Symbol(base.Msg):
     """
     market data base class.
     """
@@ -16,14 +16,14 @@ class Info(base.Msg):
 
 
 @dc.dataclass
-class Tick(Info):
+class Tick(Symbol):
     price: float
     volume: float
     pass
 
 
 @dc.dataclass
-class Kline(Info):
+class Kline(Symbol):
     open: float
     high: float
     low: float
@@ -34,7 +34,7 @@ class Kline(Info):
 
 
 @dc.dataclass
-class OrderBook(Info):
+class OrderBook(Symbol):
     """
     某一时刻，委买委卖列表队列
     """

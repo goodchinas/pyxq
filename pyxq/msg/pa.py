@@ -2,7 +2,7 @@ import dataclasses as dc
 import typing as tp
 
 from .. import base
-from ..msg import td, ba
+from ..msg import td
 
 
 @dc.dataclass
@@ -21,7 +21,12 @@ class ContractMod(base.Mod):
 
 
 @dc.dataclass
-class ContractMsg(ba.Symbol):
+class Symbol(base.Msg):
+    symbol: str
+
+
+@dc.dataclass
+class ContractMsg(Symbol):
     """
     be decided by the exchange.
     """
@@ -61,7 +66,7 @@ class CommissionStockA(CommissionMod):
     commission: float
     min_commission: float
 
-    def get(self, c: ContractMsg, ts: tp.Deque[td.Trade]) -> float:
+    def get(self, c: ContractMod, ts: tp.Deque[td.Trade]) -> float:
         return sum([(abs(t.num) * t.price * c.value_per_dot * self.tax if t.num < 0 else 0) +
                     max(self.min_commission, abs(t.num) * t.price * c.value_per_dot * self.commission)
                     for t in ts])
@@ -70,7 +75,7 @@ class CommissionStockA(CommissionMod):
 
 
 @dc.dataclass
-class CommissionMsg(ba.Symbol):
+class CommissionMsg(Symbol):
     """
     be decided by broker.
     """
@@ -110,5 +115,5 @@ class SlippagePer(SlippageMod):
 
 
 @dc.dataclass
-class SlippageMsg(ba.Symbol):
+class SlippageMsg(Symbol):
     sm: SlippageMod

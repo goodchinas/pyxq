@@ -2,12 +2,13 @@ import typing as t
 import unittest
 from collections import deque
 from datetime import datetime
-
+import os
 import numpy as np
 import pandas as pd
 
-from pyxq import const as c ,actor,cb,msg,service
-from pyxq.msg import md,td
+from pyxq import const as c, actor, cb, msg, service
+from pyxq.msg import md, td
+
 
 class MaSignal(deque):
     status: int
@@ -62,7 +63,7 @@ def run():
     broker = actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 读取数据
     symbol = '000002'
-    data = pd.read_csv(rf'data/{symbol}.csv')
+    data = pd.read_csv(os.path.abspath(f'data/{symbol}.csv'))
     # 行情事件
     for i, d in data[-100:].iterrows():
         exchange.broker.route(msg.md.Kline(
