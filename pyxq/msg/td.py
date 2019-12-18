@@ -1,4 +1,5 @@
 import dataclasses as dc
+
 import numpy as np
 
 from .. import base
@@ -6,24 +7,24 @@ from .. import const
 
 
 @dc.dataclass
-class Info(base.Msg):
+class Base(base.Msg):
     pass
 
 
 @dc.dataclass
-class Settle(Info):
+class Settle(Base):
     pass
 
 
 @dc.dataclass
-class Settled(Info):
+class Settled(Base):
     cash: float
     equity: float
     commission: float
 
 
 @dc.dataclass
-class Order(Info):
+class OrderData(base.Mod):
     symbol: str
     oc: const.OC
     price: float
@@ -35,12 +36,12 @@ class Order(Info):
 
 
 @dc.dataclass
-class Limit(Order):
+class Limit(OrderData):
     pass
 
 
 @dc.dataclass
-class Market(Order):
+class Market(OrderData):
     """
     不用 市价类型基本上由限价模拟：https://blog.csdn.net/u012724887/article/details/98502040
     """
@@ -48,8 +49,14 @@ class Market(Order):
 
 
 @dc.dataclass
-class OrderRsp(Info):
-    order: Order
+class OrderMsg(Base):
+    od: OrderData
+    pass
+
+
+@dc.dataclass
+class OrderRsp(Base):
+    oms: OrderMsg
 
 
 @dc.dataclass
@@ -58,8 +65,8 @@ class Ordered(OrderRsp):
 
 
 @dc.dataclass
-class Cancel(Info):
-    order: Order
+class Cancel(Base):
+    order: OrderMsg
     pass
 
 

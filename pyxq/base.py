@@ -30,8 +30,23 @@ class Msg(object):
         cls.key = hash(cls)
 
 
+@dc.dataclass
+class Mod(object):
+    """
+    数据模型
+    """
+    pass
+
+
 class Service(object):
     """
     服务
+    """
+    pass
+
+
+class InterFace(object):
+    """
+    接口
     """
     pass

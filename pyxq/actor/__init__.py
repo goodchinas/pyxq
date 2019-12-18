@@ -1,4 +1,5 @@
 import typing as tp
+
 from .. import base
 from .. import cb
 from ..msg import md, td, pa
@@ -66,8 +67,7 @@ class Broker(base.Actor):
     acc: account.Account
 
     def __init__(self, gateway: cb.CallBack, exchange: cb.CallBack):
-        gateway.bind(td.Order.key, self.on_order)
-        gateway.bind(td.Market.key, self.on_order)
+        gateway.bind(td.OrderMsg.key, self.on_order)
         exchange.bind(td.Trade.key, self.on_trade)
         exchange.bind(md.Kline.key, self.on_kline)
         self.gateway = gateway
@@ -80,10 +80,10 @@ class Broker(base.Actor):
     def on_cash(self, x: pa.Cash):
         self.acc.on_cash(x=x)
 
-    def on_commission(self, x: pa.Commission):
+    def on_commission(self, x: pa.CommissionMsg):
         self.acc.on_commission(x=x)
 
-    def on_contract(self, x: pa.Contract):
+    def on_contract(self, x: pa.ContractMsg):
         self.acc.on_contract(x=x)
 
     def on_ordered(self, x: td.Ordered):
@@ -91,7 +91,7 @@ class Broker(base.Actor):
 
     # def on
 
-    def on_order(self, o: td.Order):
+    def on_order(self, o: td.OrderMsg):
         print(self.__class__.__name__, o)
         self.exchange.route(o)
         pass
@@ -115,17 +115,16 @@ class Exchange(base.Actor):
     broker: cb.CallBack
 
     def __init__(self, broker: cb.CallBack):
-        broker.bind(td.Order.key, self.on_order)
-        broker.bind(td.Market.key, self.on_order)
+        broker.bind(td.OrderMsg.key, self.on_order)
         self.broker = broker
 
-    def on_order(self, o: td.Order):
+    def on_order(self, o: td.OrderMsg):
         print(self.__class__.__name__, o)
         self.broker.route(
             td.Trade(
-                order=o,
-                price=o.price,
-                num=o.num,
+                oms=o,
+                price=o.od.price,
+                num=o.od.num,
                 dt=o.dt
             )
         )
