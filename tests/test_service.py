@@ -2,11 +2,12 @@ import typing as t
 import unittest
 from collections import deque
 from datetime import datetime
-import os
+from os import path
+
 import numpy as np
 import pandas as pd
 
-from pyxq import const as c, actor, cb, msg, service
+from pyxq import const as c, actor, cb, msg
 from pyxq.msg import md, td
 
 
@@ -63,7 +64,11 @@ def run():
     broker = actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 读取数据
     symbol = '000002'
-    data = pd.read_csv(os.path.abspath(f'data/{symbol}.csv'))
+    file = path.join(path.dirname(path.realpath(__file__)), rf'data/{symbol}.csv')
+    print(file)
+    # data = pd.read_csv(path.abspath(f'data/{symbol}.csv'))
+    # data = pd.read_csv(f'data/{symbol}.csv')
+    data = pd.read_csv(file)
     # 行情事件
     for i, d in data[-100:].iterrows():
         exchange.broker.route(msg.md.Kline(

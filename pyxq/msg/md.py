@@ -4,7 +4,6 @@ market data type.
 import dataclasses as dc
 
 from .. import base
-from . import td
 
 
 @dc.dataclass

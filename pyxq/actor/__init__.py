@@ -38,16 +38,16 @@ class KLine(base.Actor):
         self.gateway = gateway
 
     def on_tick(self, x: md.Tick):
-        _p = x.trade.price
+        _p = x.price
         if x.symbol not in self.ks or self.ks[x.symbol].dt.date() != x.dt.date():
             self.ks[x.symbol] = md.Kline(symbol=x.symbol, dt=x.dt, open=_p, high=_p, low=_p,
-                                         close=_p, volume=x.trade.num)
+                                         close=_p, volume=x.volume)
         else:
             _k = self.ks[x.symbol]
             _k.high = max(_k.high, _p)
             _k.low = min(_k.low, _p)
             _k.close = _p
-            _k.volume += x.trade.num
+            _k.volume += x.volume
         pass
 
     def on_settle(self, x: td.Settle):
