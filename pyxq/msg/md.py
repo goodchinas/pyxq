@@ -3,11 +3,11 @@ market data type.
 """
 import dataclasses as dc
 
-from .. import base
+from .. import ba
 
 
 @dc.dataclass
-class Symbol(base.Msg):
+class Symbol(ba.Msg):
     """
     market data base class.
     """
@@ -22,13 +22,21 @@ class Tick(Symbol):
 
 
 @dc.dataclass
-class Kline(Symbol):
+class _Kline(Symbol):
     open: float
     high: float
     low: float
     close: float
     volume: float
+    pass
 
+
+@dc.dataclass
+class Open(ba.Msg):
+    pass
+
+
+class Close(ba.Msg):
     pass
 
 

@@ -1,5 +1,5 @@
-from .. import base
+from .. import ba
 
 
-class Performance(base.Service):
+class Performance(ba.Service):
     pass

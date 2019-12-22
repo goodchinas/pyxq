@@ -1,12 +1,10 @@
 from datetime import datetime
 from unittest import TestCase
 
-from pyxq import const
+from pyxq import cn
 from pyxq.msg import pa, td, md
 from pyxq.service import account
 
-
-# todo 仓位冻结算法，改为无状态法
 
 class TestAccount(TestCase):
     def test_account(self):
@@ -21,7 +19,7 @@ class TestAccount(TestCase):
                 symbol=symbol,
                 cm=pa.CommissionStockA(tax=0.001, commission=0.00025, min_commission=5),
             ))
-        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=const.OC.O, price=10, num=1000), dt=datetime.now())
+        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=cn.OC.O, price=10, num=1000), dt=datetime.now())
         a.on_ordered(x=td.Ordered(oms=o, dt=datetime.now()))
         self.assertTrue(a.frozen == 10 * 1000)
         a.on_trade(x=td.Trade(dt=datetime.now(), oms=o, price=o.od.price, num=o.od.num))
@@ -33,7 +31,7 @@ class TestAccount(TestCase):
         a.on_tick(x=md.Tick(symbol=symbol, dt=datetime.now(), price=20, volume=100))
         self.assertTrue(a.profit == (20 - 10) * 1000)
 
-        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=const.OC.C, price=20, num=-1000), dt=datetime.now())
+        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=cn.OC.C, price=20, num=-1000), dt=datetime.now())
         a.on_ordered(x=td.Ordered(oms=o, dt=datetime.now()))
         a.on_trade(x=td.Trade(dt=datetime.now(), oms=o, price=o.od.price, num=o.od.num))
         self.assertTrue(

@@ -1,11 +1,14 @@
 import typing as t
 from collections import defaultdict
 
-from . import base
+from . import ba
 
 KeyType = t.TypeVar(name='KeyType', bound=int)
-EventType = t.TypeVar(name='EventType', bound=base.Msg)
+EventType = t.TypeVar(name='EventType', bound=ba.Msg)
 CallBackType = t.Callable[[], None]
+"""
+callback center.
+"""
 
 
 class CallBack(object):

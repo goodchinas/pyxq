@@ -1,12 +1,12 @@
 import dataclasses as dc
 import typing as tp
 
-from .. import base
+from .. import ba
 from ..msg import td
 
 
 @dc.dataclass
-class ContractMod(base.Mod):
+class ContractMod(ba.Mod):
     num_per_unit: float
     value_per_dot: float
     margin_ratio: float
@@ -21,7 +21,7 @@ class ContractMod(base.Mod):
 
 
 @dc.dataclass
-class Symbol(base.Msg):
+class Symbol(ba.Msg):
     symbol: str
 
 
@@ -34,7 +34,7 @@ class ContractMsg(Symbol):
 
 
 @dc.dataclass
-class Cash(base.Msg):
+class Cash(ba.Msg):
     """
     be decided by broker.
     """
@@ -43,7 +43,7 @@ class Cash(base.Msg):
 
 
 @dc.dataclass
-class CommissionMod(base.Mod):
+class CommissionMod(ba.Mod):
     def get(self, c: ContractMod, ts: tp.Deque[td.Trade]):
         raise NotImplementedError
 
@@ -84,7 +84,7 @@ class CommissionMsg(Symbol):
 
 
 @dc.dataclass
-class SlippageMod(base.Mod):
+class SlippageMod(ba.Mod):
     """
     be decided by exchange.
     """

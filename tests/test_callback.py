@@ -1,19 +1,19 @@
 import dataclasses as dc
 from unittest import TestCase
 from datetime import datetime
-import pyxq.base
+import pyxq.ba
 from pyxq import cb as cb
 
 
 @dc.dataclass
-class ServerMsg(pyxq.base.Msg):
+class ServerMsg(pyxq.ba.Msg):
     text: str
 
     pass
 
 
 @dc.dataclass
-class ClientMsg(pyxq.base.Msg):
+class ClientMsg(pyxq.ba.Msg):
     text: str
 
     pass

@@ -1,5 +1,9 @@
 import enum
 
+"""
+constant data。
+"""
+
 
 class OC(enum.Enum):
     O = 1

@@ -2,13 +2,12 @@ import dataclasses as dc
 import typing as tp
 from collections import defaultdict
 
-from .. import base
-from .. import const as ct
+from .. import ba, cn, itf
 from ..msg import td, pa, md
 
 
 @dc.dataclass
-class Position(base.Service, tp.Deque[td.Trade]):
+class Position(ba.Service, tp.Deque[td.Trade]):
     price: float = dc.field(init=False, default=0)
 
     def close(self, x: td.Trade, y: pa.ContractMod) -> float:
@@ -16,7 +15,8 @@ class Position(base.Service, tp.Deque[td.Trade]):
         _volume = x.num
         _profit = 0
         _t = None
-        while _volume * x.bs > 0:
+        _bs = -1 if x.num < 0 else 1
+        while _volume * _bs > 0:
             if abs(self[0].num) > abs(_volume):
                 _t = self[0]
                 _t.num += _volume
@@ -34,7 +34,7 @@ class Position(base.Service, tp.Deque[td.Trade]):
 
 
 @dc.dataclass
-class Order(base.Service, tp.Deque[td.Trade]):
+class Order(ba.Service, tp.Deque[td.Trade]):
     oms: td.OrderMsg
     cancel_nm: float = dc.field(init=False, default=0)  # 取消
     reject_nm: float = dc.field(init=False, default=0)  # 拒绝
@@ -51,7 +51,7 @@ class Order(base.Service, tp.Deque[td.Trade]):
 
 
 @dc.dataclass
-class Account(base.Service):
+class Account(ba.Service, itf.OrderRsp, itf.PaReq, itf.MDRtn):
     """
     持仓、权益、处理成交
     # todo 更新行情，另起一个事件
@@ -61,13 +61,13 @@ class Account(base.Service):
     contracts: tp.Dict[str, pa.ContractMod] = dc.field(default_factory=dict, init=False)
     commissions: tp.Dict[str, pa.CommissionMod] = dc.field(default_factory=dict, init=False)
     orders: tp.Dict[str, Order] = dc.field(default_factory=dict, init=False)
-    positions: tp.DefaultDict[float, tp.DefaultDict[str, Position]] = dc.field(
+    positions: tp.DefaultDict[cn.LS, tp.DefaultDict[str, Position]] = dc.field(
         default_factory=lambda: defaultdict(lambda: defaultdict(Position)), init=False)
 
     @property
     def margin(self) -> float:
         return sum([
-            self.contracts[t.oms.od.symbol].get_margin(t.price * t.num)
+            self.contracts[t.oms.od.symbol].get_margin(p.price * t.num)
             for i in self.positions.values() for p in i.values() for t in p
         ])
 
@@ -82,7 +82,7 @@ class Account(base.Service):
     def frozen(self):
         return sum([
             self.contracts[i.oms.od.symbol].get_margin(i.ing * i.oms.od.price)
-            for i in self.orders.values() if i.oms.od.oc == ct.OC.O
+            for i in self.orders.values() if i.oms.od.oc == cn.OC.O
         ])
 
     @property
@@ -100,22 +100,20 @@ class Account(base.Service):
             for i in self.orders.values() if i.ok
         ])
 
-    def settle(self, x: td.Settle):
-        _r = td.Settled(cash=self.free, equity=self.equity, commission=self.commission, dt=x.dt)
-        self.orders = {k: v for k, v in self.orders.items() if not v.ok}
-        return _r
+    def get_free(self, symbol: str):
+        return self.positions
 
     def on_ordered(self, x: td.Ordered):
         self.orders[x.oms.id] = Order(oms=x.oms)
 
     def on_trade(self, x: td.Trade):
-        if x.oms.od.oc == ct.OC.O:
-            self.positions[x.bs][x.oms.od.symbol].open(x=x)
+        if x.oms.od.oc == cn.OC.O:
+            self.positions[x.ls][x.oms.od.symbol].open(x=x)
         else:
-            _p = self.positions[-x.bs][x.oms.od.symbol]
+            _p = self.positions[x.ls][x.oms.od.symbol]
             self.cash += _p.close(x=x, y=self.contracts[x.oms.od.symbol])
             if len(_p) == 0:
-                del self.positions[-x.bs][x.oms.od.symbol]
+                del self.positions[x.ls][x.oms.od.symbol]
         self.orders[x.oms.id].append(x)
         self._order_rtn(x.oms)
 
@@ -135,6 +133,15 @@ class Account(base.Service):
         for i in self.positions.values():
             if x.symbol in i:
                 i[x.symbol].price = x.price
+
+    def on_open(self, x: md.Open):
+        pass
+
+    def on_close(self, x: md.Close):
+        self.orders = {k: v for k, v in self.orders.items() if not v.ok}
+
+    def on_order_book(self, x: md.OrderBook):
+        pass
 
     def on_cash(self, x: pa.Cash):
         self.cash += x.num

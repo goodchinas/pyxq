@@ -1,38 +1,35 @@
 import dataclasses as dc
 
 import numpy as np
-
-from .. import base
-from .. import const
+from datetime import datetime
+from .. import ba
+from .. import cn
 
 
 @dc.dataclass
-class Base(base.Msg):
+class Base(ba.Msg):
     pass
 
 
 @dc.dataclass
-class Settle(Base):
+class SettleMsg(Base):
     pass
 
 
 @dc.dataclass
-class Settled(Base):
+class SettleData(ba.Mod):
     cash: float
     equity: float
     commission: float
+    dt: datetime
 
 
 @dc.dataclass
-class OrderData(base.Mod):
+class OrderData(ba.Mod):
     symbol: str
-    oc: const.OC
+    oc: cn.OC
     price: float
     num: float
-
-    @property
-    def bs(self) -> float:
-        return np.sign(self.num)
 
 
 @dc.dataclass
@@ -43,7 +40,7 @@ class Limit(OrderData):
 @dc.dataclass
 class Market(OrderData):
     """
-    不用 市价类型基本上由限价模拟：https://blog.csdn.net/u012724887/article/details/98502040
+    市价类型基本上由限价模拟：https://blog.csdn.net/u012724887/article/details/98502040
     """
     pass
 
@@ -76,8 +73,10 @@ class Trade(OrderRsp):
     num: float
 
     @property
-    def bs(self) -> float:
-        return np.sign(self.num)
+    def ls(self) -> cn.LS:
+        return cn.LS.L if (self.num > 0 and self.oms.od.oc == cn.OC.O) or \
+                          (self.num < 0 and self.oms.od.oc == cn.OC.C) \
+            else cn.LS.S
 
     pass
 
