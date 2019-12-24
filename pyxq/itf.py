@@ -6,7 +6,7 @@ interface
 """
 
 
-class OrderRsp(ba.InterFace):
+class IOrderRsp(ba.InterFace):
     def on_trade(self, x: td.Trade):
         raise NotImplementedError
 
@@ -20,15 +20,15 @@ class OrderRsp(ba.InterFace):
         raise NotImplementedError
 
 
-class OrderReq(ba.InterFace):
-    def on_order(self, x: td.OrderMsg):
+class IOrderReq(ba.InterFace):
+    def on_order(self, x: td.OrderReq):
         raise NotImplementedError
 
     def on_cancel(self, x: td.Cancel):
         raise NotImplementedError
 
 
-class PaReq(ba.InterFace):
+class IPaReq(ba.InterFace):
     def on_commission(self, x: pa.CommissionMsg):
         raise NotImplementedError
 
@@ -39,7 +39,7 @@ class PaReq(ba.InterFace):
         raise NotImplementedError
 
 
-class MDRtn(ba.InterFace):
+class IMDRtn(ba.InterFace):
     def on_tick(self, x: md.Tick):
         raise NotImplementedError
 

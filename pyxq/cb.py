@@ -1,13 +1,11 @@
 import typing as t
 from collections import defaultdict
 
-from . import ba
+from .ba import Msg
 
-KeyType = t.TypeVar(name='KeyType', bound=int)
-EventType = t.TypeVar(name='EventType', bound=ba.Msg)
 CallBackType = t.Callable[[], None]
 """
-callback center.
+the callback center.
 """
 
 
@@ -15,27 +13,27 @@ class CallBack(object):
     """
     manage the callbacks and msg.
     """
-    _callbacks: t.Dict[KeyType, t.List[CallBackType]]
+    _callbacks: t.Dict[int, t.List[CallBackType]]
 
     def __init__(self):
         self._callbacks = defaultdict(list)
         pass
 
-    def bind(self, key: KeyType, callback: CallBackType):
+    def bind(self, key: int, callback: CallBackType):
         call_back_list = self._callbacks[key]
         if callback not in call_back_list:
             call_back_list.append(callback)
         else:
             raise ValueError('call back function only be promised register once.')
 
-    def unbind(self, key: KeyType, callback: CallBackType):
+    def unbind(self, key: int, callback: CallBackType):
         call_back_list = self._callbacks[key]
         if callback in call_back_list:
             call_back_list.remove(callback)
         else:
             raise ValueError('call back function is not in the manage center.')
 
-    def route(self, event: EventType):
-        if event.key in self._callbacks:
-            for cb in self._callbacks[event.key]:
-                cb(event)
+    def route(self, x: Msg):
+        if x.key in self._callbacks:
+            for cb in self._callbacks[x.key]:
+                cb(x)

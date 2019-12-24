@@ -1,11 +1,11 @@
 import typing as tp
 from collections import deque
-from .. import ba, cb, itf
+from .. import ba, cb, itf, cn
 from ..msg import md, td, pa
 from ..service import account
 
 
-class GateWay(ba.Actor, itf.MDRtn, itf.OrderRsp):
+class GateWay(ba.Actor, itf.IMDRtn, itf.IOrderRsp):
     """
     中间网关/代理服务：对接行情和交易
     """
@@ -50,7 +50,7 @@ class GateWay(ba.Actor, itf.MDRtn, itf.OrderRsp):
     pass
 
 
-class Broker(ba.Actor, itf.OrderReq, itf.OrderRsp, itf.PaReq, itf.MDRtn):
+class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     """
     账户维护：网关/代理右侧，模拟类服务。
     订单、仓位、资产和绩效分析
@@ -61,7 +61,7 @@ class Broker(ba.Actor, itf.OrderReq, itf.OrderRsp, itf.PaReq, itf.MDRtn):
     acc: account.Account
 
     def __init__(self, gateway: cb.CallBack, exchange: cb.CallBack):
-        gateway.bind(td.OrderMsg.key, self.on_order)
+        gateway.bind(td.OrderReq.key, self.on_order)
         gateway.bind(td.Cancel.key, self.on_cancel)
         exchange.bind(td.Ordered.key, self.on_ordered)
         exchange.bind(td.Trade.key, self.on_trade)
@@ -84,31 +84,58 @@ class Broker(ba.Actor, itf.OrderReq, itf.OrderRsp, itf.PaReq, itf.MDRtn):
     def on_contract(self, x: pa.ContractMsg):
         self.acc.on_contract(x=x)
 
-    def on_order(self, o: td.OrderMsg):
-        self.exchange.route(o)
+    def on_order(self, o: td.OrderReq):
+        _od = o.od
+        _cn = self.acc.contracts[_od.symbol]
+        _cm = self.acc.commissions[_od.symbol]
+        _x = True
+        if _od.oc == cn.OC.O:
+            if self.acc.free < (
+                _cn.get_margin(value=_od.price * _od.num) +
+                _cm.get(c=_cn, ts=deque([td.Trade(dt=..., orq=o, price=_od.price, num=_od.num)]))
+            ):
+                _x = False
+        else:
+            if abs(self.acc.get_free(symbol=_od.symbol, ls=_od.ls)) < abs(_od.num):
+                _x = False
+        if _x:
+            _ordered = td.Ordered(dt=o.dt, orq=o, actor=cn.ACTOR.BROKER)
+            self.acc.on_ordered(x=_ordered)
+            self.gateway.route(x=_ordered)
+            self.exchange.route(x=o)
+        else:
+            self.gateway.route(x=td.Rejected(dt=o.dt, orq=o, actor=cn.ACTOR.BROKER))
         pass
 
     def on_cancel(self, x: td.Cancel):
+        self.exchange.route(x=x)
         pass
 
     def on_ordered(self, x: td.Ordered):
-        self.acc.on_ordered(x=x)
+        self.gateway.route(x=x)
 
     def on_canceled(self, x: td.Canceled):
         self.acc.on_canceled(x=x)
+        self.gateway.route(x=x)
 
     def on_rejected(self, x: td.Rejected):
+        self.acc.on_rejected(x=x)
+        self.gateway.route(x=x)
         pass
 
     def on_trade(self, t: td.Trade):
         self.acc.on_trade(t)
-        self.gateway.route(t)
+        self.gateway.route(x=t)
         pass
 
     def on_open(self, x: md.Open):
+        self.acc.on_open(x=x)
+        self.gateway.route(x=x)
         pass
 
     def on_close(self, x: md.Close):
+        self.acc.on_close(x=x)
+        self.gateway.route(x=x)
         pass
 
     def on_tick(self, x: md.Tick):
@@ -117,34 +144,28 @@ class Broker(ba.Actor, itf.OrderReq, itf.OrderRsp, itf.PaReq, itf.MDRtn):
         pass
 
     def on_order_book(self, x: md.OrderBook):
+        self.acc.on_order_book(x=x)
+        self.gateway.route(x=x)
         pass
 
     pass
 
 
-class Exchange(ba.Actor, itf.OrderReq, itf.MDRtn):
+class Exchange(ba.Actor, itf.IOrderReq, itf.IMDRtn):
     """
     交易所，接受订单、交易撮合、发布行情
     """
     broker: cb.CallBack
-    orders: tp.Deque[td.OrderMsg]
+    orders: tp.Deque[td.OrderReq]
 
     def __init__(self, broker: cb.CallBack):
-        broker.bind(td.OrderMsg.key, self.on_order)
+        broker.bind(td.OrderReq.key, self.on_order)
         broker.bind(td.Cancel.key, self.on_cancel)
         self.broker = broker
         self.orders = deque()
 
-    def on_order(self, x: td.OrderMsg):
-        # self.broker.route(
-        #     td.Trade(
-        #         oms=x,
-        #         price=x.od.price,
-        #         num=x.od.num,
-        #         dt=x.dt
-        #     )
-        # )
-        self.broker.route(td.Ordered(dt=x.dt, oms=x))
+    def on_order(self, x: td.OrderReq):
+        self.broker.route(td.Ordered(dt=x.dt, orq=x, actor=cn.ACTOR.EXCHANGE))
         self.orders.append(x)
         pass
 
@@ -164,7 +185,7 @@ class Exchange(ba.Actor, itf.OrderReq, itf.MDRtn):
             _o = self.orders.popleft()
             self.broker.route(td.Trade(
                 dt=x.dt,
-                oms=_o,
+                orq=_o,
                 price=x.price,
                 num=_o.od.num,
             ))

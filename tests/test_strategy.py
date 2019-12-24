@@ -44,18 +44,18 @@ class Strategy(actor.GateWay):
             self.cur_date = x.dt.date()
             _x = self.signal.append(x.price)
             if _x > 0:
-                self.broker.route(td.OrderMsg(od=td.OrderData(
+                self.broker.route(td.OrderReq(od=td.OrderData(
                     symbol=x.symbol, oc=cn.OC.O, price=x.price, num=1000), dt=x.dt)
                 )
             elif _x < 0:
-                self.broker.route(td.OrderMsg(od=td.OrderData(
+                self.broker.route(td.OrderReq(od=td.OrderData(
                     symbol=x.symbol, oc=cn.OC.C, price=x.price, num=-1000), dt=x.dt)
                 )
 
             pass
 
     def on_trade(self, t: td.Trade):
-        print(self.__class__.__name__, t.oms.od.symbol, t.num, t.price)
+        print(self.__class__.__name__, t.orq.od.symbol, t.num, t.price)
         pass
 
     pass
@@ -97,9 +97,9 @@ def run():
             exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
 
         exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.close, volume=d.volume))
+        _a = broker.acc
+        print(_a.equity, _a.cash, _a.commission, _a.margin)
         exchange.on_close(md.Close(dt=_dt))
-    _a = broker.acc
-    print(_a.equity, _a.cash, _a.commission, _a.margin)
 
 
 class TestService(unittest.TestCase):

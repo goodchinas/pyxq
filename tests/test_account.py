@@ -19,10 +19,11 @@ class TestAccount(TestCase):
                 symbol=symbol,
                 cm=pa.CommissionStockA(tax=0.001, commission=0.00025, min_commission=5),
             ))
-        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=cn.OC.O, price=10, num=1000), dt=datetime.now())
-        a.on_ordered(x=td.Ordered(oms=o, dt=datetime.now()))
+        o = td.OrderReq(od=td.OrderData(symbol=symbol, oc=cn.OC.O, price=10, num=1000), dt=datetime.now())
+
+        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now(), actor=cn.ACTOR.BROKER))
         self.assertTrue(a.frozen == 10 * 1000)
-        a.on_trade(x=td.Trade(dt=datetime.now(), oms=o, price=o.od.price, num=o.od.num))
+        a.on_trade(x=td.Trade(dt=datetime.now(), orq=o, price=o.od.price, num=o.od.num))
         self.assertTrue(
             a.frozen == 0 and
             a.cash == (cash - max(1000 * 10 * 0.00025, 5)) and
@@ -31,9 +32,9 @@ class TestAccount(TestCase):
         a.on_tick(x=md.Tick(symbol=symbol, dt=datetime.now(), price=20, volume=100))
         self.assertTrue(a.profit == (20 - 10) * 1000)
 
-        o = td.OrderMsg(od=td.OrderData(symbol=symbol, oc=cn.OC.C, price=20, num=-1000), dt=datetime.now())
-        a.on_ordered(x=td.Ordered(oms=o, dt=datetime.now()))
-        a.on_trade(x=td.Trade(dt=datetime.now(), oms=o, price=o.od.price, num=o.od.num))
+        o = td.OrderReq(od=td.OrderData(symbol=symbol, oc=cn.OC.C, price=20, num=-1000), dt=datetime.now())
+        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now(), actor=cn.ACTOR.BROKER))
+        a.on_trade(x=td.Trade(dt=datetime.now(), orq=o, price=o.od.price, num=o.od.num))
         self.assertTrue(
             a.frozen == 0 and
             a.margin == 0 and
@@ -45,5 +46,5 @@ class TestAccount(TestCase):
                 (20 - 10) * 1000
             )
         )
-
+        print('account pass!')
         pass

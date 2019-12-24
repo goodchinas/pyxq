@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as tp
 
-from .. import ba
+from .. import ba, msg
 from ..msg import td
 
 
@@ -21,12 +21,7 @@ class ContractMod(ba.Mod):
 
 
 @dc.dataclass
-class Symbol(ba.Msg):
-    symbol: str
-
-
-@dc.dataclass
-class ContractMsg(Symbol):
+class ContractMsg(msg.Symbol):
     """
     be decided by the exchange.
     """
@@ -75,7 +70,7 @@ class CommissionStockA(CommissionMod):
 
 
 @dc.dataclass
-class CommissionMsg(Symbol):
+class CommissionMsg(msg.Symbol):
     """
     be decided by broker.
     """
@@ -115,5 +110,5 @@ class SlippagePer(SlippageMod):
 
 
 @dc.dataclass
-class SlippageMsg(Symbol):
+class SlippageMsg(msg.Symbol):
     sm: SlippageMod

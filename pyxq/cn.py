@@ -18,5 +18,14 @@ class LS(enum.Enum):
     S = -1
 
 
+class ACTOR(enum.Enum):
+    """
+    the actor enum value.
+    """
+    GATEWAY = 'gateway'
+    BROKER = 'broker'
+    EXCHANGE = 'exchange'
+
+
 if __name__ == '__main__':
     pass

@@ -1,3 +1,11 @@
+import dataclasses as dc
+from .. import ba
+
 """
-message type
+the message base type.
 """
+
+
+@dc.dataclass
+class Symbol(ba.Msg):
+    symbol: str

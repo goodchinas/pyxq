@@ -1,35 +1,30 @@
 import dataclasses as dc
-
-import numpy as np
-from datetime import datetime
-from .. import ba
-from .. import cn
+from .. import ba, cn
 
 
-@dc.dataclass
-class Base(ba.Msg):
-    pass
+class ILS(ba.InterFace):
+    @property
+    def ls(self) -> cn.LS:
+        """
 
+        :return: cn.LS:operate the position type：long or short
+        """
 
-@dc.dataclass
-class SettleMsg(Base):
-    pass
+        raise NotImplementedError
 
 
 @dc.dataclass
-class SettleData(ba.Mod):
-    cash: float
-    equity: float
-    commission: float
-    dt: datetime
-
-
-@dc.dataclass
-class OrderData(ba.Mod):
+class OrderData(ba.Mod, ILS):
     symbol: str
     oc: cn.OC
     price: float
     num: float
+
+    @property
+    def ls(self) -> cn.LS:
+        return (
+            cn.LS.L if (self.num > 0 and self.oc == cn.OC.O) or (self.num < 0 and self.oc == cn.OC.C)
+            else cn.LS.S)
 
 
 @dc.dataclass
@@ -40,52 +35,54 @@ class Limit(OrderData):
 @dc.dataclass
 class Market(OrderData):
     """
-    市价类型基本上由限价模拟：https://blog.csdn.net/u012724887/article/details/98502040
+    see：https://blog.csdn.net/u012724887/article/details/98502040
     """
     pass
 
 
 @dc.dataclass
-class OrderMsg(Base):
+class OrderReq(ba.Msg):
     od: OrderData
     pass
 
 
 @dc.dataclass
-class OrderRsp(Base):
-    oms: OrderMsg
+class Cancel(ba.Msg):
+    orq: OrderReq
+    pass
+
+
+@dc.dataclass
+class OrderRsp(ba.Msg):
+    orq: OrderReq
 
 
 @dc.dataclass
 class Ordered(OrderRsp):
-    pass
-
-
-@dc.dataclass
-class Cancel(Base):
-    order: OrderMsg
-    pass
-
-
-@dc.dataclass
-class Trade(OrderRsp):
-    price: float
-    num: float
-
-    @property
-    def ls(self) -> cn.LS:
-        return cn.LS.L if (self.num > 0 and self.oms.od.oc == cn.OC.O) or \
-                          (self.num < 0 and self.oms.od.oc == cn.OC.C) \
-            else cn.LS.S
-
+    actor: cn.ACTOR
     pass
 
 
 @dc.dataclass
 class Rejected(OrderRsp):
-    num: float
+    actor: cn.ACTOR
+    pass
 
 
 @dc.dataclass
 class Canceled(OrderRsp):
+    pass
+
+
+@dc.dataclass
+class Trade(OrderRsp, ILS):
+    price: float
     num: float
+
+    @property
+    def ls(self) -> cn.LS:
+        return cn.LS.L if (self.num > 0 and self.orq.od.oc == cn.OC.O) or \
+                          (self.num < 0 and self.orq.od.oc == cn.OC.C) \
+            else cn.LS.S
+
+    pass
