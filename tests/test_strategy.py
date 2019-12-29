@@ -33,7 +33,7 @@ class Strategy(actor.GateWay):
     signal: MaSignal
     cur_date: date
 
-    def __init__(self, broker: cb.CallBack):
+    def __init__(self, broker: cb.CallBackManager):
         super().__init__(broker=broker)
         self.signal = MaSignal(20)
         self.cur_date = date(year=1, month=1, day=1)
@@ -44,11 +44,11 @@ class Strategy(actor.GateWay):
             self.cur_date = x.dt.date()
             _x = self.signal.append(x.price)
             if _x > 0:
-                self.broker.route(td.OrderReq(od=td.OrderData(
+                self.broker.route(td.OrderReq(od=td.Limit(
                     symbol=x.symbol, oc=cn.OC.O, price=x.price, num=1000), dt=x.dt)
                 )
             elif _x < 0:
-                self.broker.route(td.OrderReq(od=td.OrderData(
+                self.broker.route(td.OrderReq(od=td.Limit(
                     symbol=x.symbol, oc=cn.OC.C, price=x.price, num=-1000), dt=x.dt)
                 )
 
@@ -63,8 +63,8 @@ class Strategy(actor.GateWay):
 
 def run():
     # 构建框架
-    exchange = actor.Exchange(broker=cb.CallBack())
-    strategy = Strategy(broker=cb.CallBack())
+    exchange = actor.Exchange(broker=cb.CallBackManager())
+    strategy = Strategy(broker=cb.CallBackManager())
     broker = actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
     # 配置
     cash, symbol = 100000, '000002'
@@ -89,16 +89,18 @@ def run():
         _dt = datetime.strptime(d.timestamp, '%Y-%m-%d')
         exchange.on_open(md.Open(dt=_dt))
         exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.open, volume=0))
-        if d.close > d.open:
-            exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
-            exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.high, volume=0))
-        else:
-            exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.high, volume=0))
-            exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
+        # if d.close > d.open:
+        #     exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
+        #     exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.high, volume=0))
+        # else:
+        #     exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.high, volume=0))
+        #     exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
 
-        exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.close, volume=d.volume))
+        # exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.close, volume=d.volume))
         _a = broker.acc
-        print(_a.equity, _a.cash, _a.commission, _a.margin)
+        print("权益:{:>10.2f} 可用:{:>10.2f} 保证:{:>10.2f} 冻结:{:>10.2f} 收益:{:>10.2f} 手续费:{:>5.1f} "
+              "开:{:>6.2f} 高:{:>6.2f} 低:{:>6.2f} 收:{:>6.2f}".format(
+            _a.equity, _a.free, _a.margin, _a.frozen, _a.profit, _a.commission, d.open, d.high, d.low, d.close))
         exchange.on_close(md.Close(dt=_dt))
 
 

@@ -21,7 +21,7 @@ class TestAccount(TestCase):
             ))
         o = td.OrderReq(od=td.OrderData(symbol=symbol, oc=cn.OC.O, price=10, num=1000), dt=datetime.now())
 
-        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now(), actor=cn.ACTOR.BROKER))
+        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now()))
         self.assertTrue(a.frozen == 10 * 1000)
         a.on_trade(x=td.Trade(dt=datetime.now(), orq=o, price=o.od.price, num=o.od.num))
         self.assertTrue(
@@ -33,7 +33,7 @@ class TestAccount(TestCase):
         self.assertTrue(a.profit == (20 - 10) * 1000)
 
         o = td.OrderReq(od=td.OrderData(symbol=symbol, oc=cn.OC.C, price=20, num=-1000), dt=datetime.now())
-        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now(), actor=cn.ACTOR.BROKER))
+        a.on_ordered(x=td.Ordered(orq=o, dt=datetime.now()))
         a.on_trade(x=td.Trade(dt=datetime.now(), orq=o, price=o.od.price, num=o.od.num))
         self.assertTrue(
             a.frozen == 0 and

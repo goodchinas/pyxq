@@ -59,21 +59,22 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     contracts: tp.Dict[str, pa.ContractMod] = dc.field(default_factory=dict, init=False)
     commissions: tp.Dict[str, pa.CommissionMod] = dc.field(default_factory=dict, init=False)
     orders: tp.Dict[str, Order] = dc.field(default_factory=dict, init=False)
+    # todo 增加订单管理字典，根据成交反馈维护当前未完成订单
     positions: tp.DefaultDict[cn.LS, tp.DefaultDict[str, Position]] = dc.field(
         default_factory=lambda: defaultdict(lambda: defaultdict(Position)), init=False)
 
     @property
     def margin(self) -> float:
         return sum([
-            self.contracts[t.orq.od.symbol].get_margin(p.price * t.num)
-            for i in self.positions.values() for p in i.values() for t in p
+            self.contracts[symbol].get_margin(p.price * t.num)
+            for _, ps in self.positions.items() for symbol, p in ps.items() for t in p
         ])
 
     @property
     def profit(self) -> float:
         return sum([
-            self.contracts[t.orq.od.symbol].get_value((p.price - t.price) * t.num)
-            for i in self.positions.values() for p in i.values() for t in p
+            self.contracts[symbol].get_value((p.price - t.price) * t.num)
+            for _, ps in self.positions.items() for symbol, p in ps.items() for t in p
         ])
 
     @property
@@ -99,14 +100,14 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
         ])
 
     def get_free(self, symbol: str, ls: cn.LS) -> float:
-        _r = 0
-        if ls in self.positions:
-            if symbol in self.positions[ls]:
-                _r = (
-                    sum([p.num for p in self.positions[ls][symbol]]) -
-                    sum([v.ing for k, v in self.orders.items() if k == symbol and not v.ok])
-                )
-        return _r
+        return (
+            sum([t.num
+                 for _ls, ps in self.positions.items() if _ls == ls
+                 for _symbol, p in ps.items() if _symbol == symbol
+                 for t in p]) -
+            sum([v.ing
+                 for k, v in self.orders.items() if k == symbol and not v.ok])
+        )
 
     def on_ordered(self, x: td.Ordered):
         self.orders[x.orq.id] = Order(orq=x.orq)

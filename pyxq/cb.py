@@ -1,7 +1,7 @@
 import typing as t
 from collections import defaultdict
-
-from .ba import Msg
+import uuid
+from . import ba
 
 CallBackType = t.Callable[[], None]
 """
@@ -9,13 +9,15 @@ the callback center.
 """
 
 
-class CallBack(object):
+class CallBackManager(object):
     """
     manage the callbacks and msg.
     """
+    id: str
     _callbacks: t.Dict[int, t.List[CallBackType]]
 
     def __init__(self):
+        self.id = str(uuid.uuid1())
         self._callbacks = defaultdict(list)
         pass
 
@@ -33,7 +35,5 @@ class CallBack(object):
         else:
             raise ValueError('call back function is not in the manage center.')
 
-    def route(self, x: Msg):
-        if x.key in self._callbacks:
-            for cb in self._callbacks[x.key]:
-                cb(x)
+    def route(self, x: ba.Msg):
+        [cb(x) for k, v in self._callbacks.items() if k == x.key for cb in v]

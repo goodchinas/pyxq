@@ -20,7 +20,7 @@ class ClientMsg(pyxq.ba.Msg):
 
 
 class Server(object):
-    def __init__(self, callback: cb.CallBack):
+    def __init__(self, callback: cb.CallBackManager):
         self.callback = callback
         self.callback.bind(ClientMsg.key, self.show)
         pass
@@ -35,7 +35,7 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, callback: cb.CallBack):
+    def __init__(self, callback: cb.CallBackManager):
         self.callback = callback
         self.callback.bind(ServerMsg.key, self.show)
         pass
@@ -51,7 +51,7 @@ class Client(object):
 
 class TestCallBack(TestCase):
     def test_callback(self):
-        x = cb.CallBack()
+        x = cb.CallBackManager()
         client = None
         server = None
         for i in range(3):

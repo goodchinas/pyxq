@@ -1,5 +1,5 @@
 import typing as tp
-from collections import deque
+from collections import deque, defaultdict
 from .. import ba, cb, itf, cn
 from ..msg import md, td, pa
 from ..service import account
@@ -9,9 +9,9 @@ class GateWay(ba.Actor, itf.IMDRtn, itf.IOrderRsp):
     """
     中间网关/代理服务：对接行情和交易
     """
-    broker: cb.CallBack
+    broker: cb.CallBackManager
 
-    def __init__(self, broker: cb.CallBack):
+    def __init__(self, broker: cb.CallBackManager):
         broker.bind(td.Trade.key, self.on_trade)
         broker.bind(td.Ordered.key, self.on_ordered)
         broker.bind(td.Canceled.key, self.on_canceled)
@@ -56,11 +56,11 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     订单、仓位、资产和绩效分析
     存储仓位，不需要存储委托和成交（缓存都数据中心一份）
     """
-    gateway: cb.CallBack
-    exchange: cb.CallBack
+    gateway: cb.CallBackManager
+    exchange: cb.CallBackManager
     acc: account.Account
 
-    def __init__(self, gateway: cb.CallBack, exchange: cb.CallBack):
+    def __init__(self, gateway: cb.CallBackManager, exchange: cb.CallBackManager):
         gateway.bind(td.OrderReq.key, self.on_order)
         gateway.bind(td.Cancel.key, self.on_cancel)
         exchange.bind(td.Ordered.key, self.on_ordered)
@@ -99,12 +99,12 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
             if abs(self.acc.get_free(symbol=_od.symbol, ls=_od.ls)) < abs(_od.num):
                 _x = False
         if _x:
-            _ordered = td.Ordered(dt=o.dt, orq=o, actor=cn.ACTOR.BROKER)
+            _ordered = td.Ordered(dt=o.dt, orq=o)
             self.acc.on_ordered(x=_ordered)
             self.gateway.route(x=_ordered)
             self.exchange.route(x=o)
         else:
-            self.gateway.route(x=td.Rejected(dt=o.dt, orq=o, actor=cn.ACTOR.BROKER))
+            self.gateway.route(x=td.Rejected(dt=o.dt, orq=o))
         pass
 
     def on_cancel(self, x: td.Cancel):
@@ -155,18 +155,20 @@ class Exchange(ba.Actor, itf.IOrderReq, itf.IMDRtn):
     """
     交易所，接受订单、交易撮合、发布行情
     """
-    broker: cb.CallBack
-    orders: tp.Deque[td.OrderReq]
+    broker: cb.CallBackManager
+    # orders: tp.Deque[td.OrderReq]
+    orders: tp.DefaultDict[str, tp.DefaultDict[cn.BS, tp.Deque[td.OrderReq]]]
 
-    def __init__(self, broker: cb.CallBack):
+    def __init__(self, broker: cb.CallBackManager):
         broker.bind(td.OrderReq.key, self.on_order)
         broker.bind(td.Cancel.key, self.on_cancel)
         self.broker = broker
-        self.orders = deque()
+        # self.orders = deque()
+        self.orders = defaultdict(lambda: defaultdict(deque))
 
     def on_order(self, x: td.OrderReq):
-        self.broker.route(td.Ordered(dt=x.dt, orq=x, actor=cn.ACTOR.EXCHANGE))
-        self.orders.append(x)
+        self.broker.route(td.Ordered(dt=x.dt, orq=x))
+        self.orders[x.od.symbol][x.od.bs].append(x)
         pass
 
     def on_cancel(self, x: td.Cancel):
@@ -181,14 +183,22 @@ class Exchange(ba.Actor, itf.IOrderReq, itf.IMDRtn):
         pass
 
     def on_tick(self, x: md.Tick):
-        while len(self.orders) > 0:
-            _o = self.orders.popleft()
-            self.broker.route(td.Trade(
-                dt=x.dt,
-                orq=_o,
-                price=x.price,
-                num=_o.od.num,
-            ))
+        if x.symbol in self.orders:
+            for ls, v in self.orders[x.symbol].items():
+                _v = deque()
+                for o in v:
+                    _t = type(o.od)
+                    if _t == td.Limit:
+                        if (
+                            (o.od.price >= x.price and ls == cn.BS.B) or
+                            (o.od.price <= x.price and ls == cn.BS.S)
+                        ):
+                            self.broker.route(x=td.Trade(dt=x.dt, orq=o, price=x.price, num=o.od.num, ))
+                        else:
+                            _v.append(o)
+                    elif _t == td.Market:
+                        self.broker.route(x=td.Trade(dt=x.dt, orq=o, price=x.price, num=o.od.num, ))
+                self.orders[x.symbol][ls] = _v
         self.broker.route(x)
         pass
 

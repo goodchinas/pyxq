@@ -1,5 +1,6 @@
 import dataclasses as dc
 from .. import ba, cn
+import uuid
 
 
 class ILS(ba.InterFace):
@@ -15,16 +16,24 @@ class ILS(ba.InterFace):
 
 @dc.dataclass
 class OrderData(ba.Mod, ILS):
+    """
+    hello world
+    """
     symbol: str
     oc: cn.OC
     price: float
     num: float
+    bid: str = dc.field(default=..., init=False, repr=False)  # broker id fro one more broker
 
     @property
     def ls(self) -> cn.LS:
         return (
             cn.LS.L if (self.num > 0 and self.oc == cn.OC.O) or (self.num < 0 and self.oc == cn.OC.C)
             else cn.LS.S)
+
+    @property
+    def bs(self) -> cn.BS:
+        return cn.BS.B if self.num > 0 else cn.BS.S
 
 
 @dc.dataclass
@@ -47,25 +56,23 @@ class OrderReq(ba.Msg):
 
 
 @dc.dataclass
-class Cancel(ba.Msg):
-    orq: OrderReq
-    pass
-
-
-@dc.dataclass
 class OrderRsp(ba.Msg):
     orq: OrderReq
 
 
 @dc.dataclass
 class Ordered(OrderRsp):
-    actor: cn.ACTOR
+    pass
+
+
+@dc.dataclass
+class Cancel(ba.Msg):
+    ord: Ordered
     pass
 
 
 @dc.dataclass
 class Rejected(OrderRsp):
-    actor: cn.ACTOR
     pass
 
 
