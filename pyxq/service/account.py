@@ -2,8 +2,8 @@ import dataclasses as dc
 import typing as tp
 from collections import defaultdict
 
-from .. import ba, cn, itf
-from ..msg import td, pa, md
+from .. import ba, cn
+from ..msg import td, pa
 
 
 @dc.dataclass
@@ -28,7 +28,7 @@ class Position(ba.Service, tp.Deque[td.Trade]):
                 _volume += _t.num
         return _profit
 
-    def open(self, x: td.Trade) -> None:
+    def open(self, x: td.Trade):
         self.price = x.price
         self.append(x)
 
@@ -51,7 +51,7 @@ class Order(ba.Service, tp.Deque[td.Trade]):
 
 
 @dc.dataclass
-class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
+class Account(ba.Service):
     """
     the account service.
     """
@@ -59,7 +59,6 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     contracts: tp.Dict[str, pa.ContractMod] = dc.field(default_factory=dict, init=False)
     commissions: tp.Dict[str, pa.CommissionMod] = dc.field(default_factory=dict, init=False)
     orders: tp.Dict[str, Order] = dc.field(default_factory=dict, init=False)
-    # todo 增加订单管理字典，根据成交反馈维护当前未完成订单
     positions: tp.DefaultDict[cn.LS, tp.DefaultDict[str, Position]] = dc.field(
         default_factory=lambda: defaultdict(lambda: defaultdict(Position)), init=False)
 
@@ -67,18 +66,18 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     def margin(self) -> float:
         return sum([
             self.contracts[symbol].get_margin(p.price * t.num)
-            for _, ps in self.positions.items() for symbol, p in ps.items() for t in p
+            for ps in self.positions.values() for symbol, p in ps.items() for t in p
         ])
 
     @property
     def profit(self) -> float:
         return sum([
             self.contracts[symbol].get_value((p.price - t.price) * t.num)
-            for _, ps in self.positions.items() for symbol, p in ps.items() for t in p
+            for ps in self.positions.values() for symbol, p in ps.items() for t in p
         ])
 
     @property
-    def frozen(self):
+    def frozen(self) -> float:
         return sum([
             self.contracts[i.orq.od.symbol].get_margin(i.ing * i.orq.od.price)
             for i in self.orders.values() if i.orq.od.oc == cn.OC.O
@@ -93,13 +92,24 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
         return self.cash - self.frozen - self.margin + self.profit
 
     @property
+    def pv(self) -> float:
+        """
+
+        :return: the positions value.
+        """
+        return sum([
+            self.contracts[symbol].get_value(p.price * abs(t.num))
+            for ps in self.positions.values() for symbol, p in ps.items() for t in p
+        ])
+
+    @property
     def commission(self) -> float:
         return sum([
             self.commissions[i.orq.od.symbol].get(c=self.contracts[i.orq.od.symbol], ts=i)
             for i in self.orders.values() if i.ok
         ])
 
-    def get_free(self, symbol: str, ls: cn.LS) -> float:
+    def get_free_position(self, symbol: str, ls: cn.LS) -> float:
         return (
             sum([t.num
                  for _ls, ps in self.positions.items() if _ls == ls
@@ -108,54 +118,5 @@ class Account(ba.Service, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
             sum([v.ing
                  for k, v in self.orders.items() if k == symbol and not v.ok])
         )
-
-    def on_ordered(self, x: td.Ordered):
-        self.orders[x.orq.id] = Order(orq=x.orq)
-
-    def on_trade(self, x: td.Trade):
-        if x.orq.od.oc == cn.OC.O:
-            self.positions[x.ls][x.orq.od.symbol].open(x=x)
-        else:
-            _p = self.positions[x.ls][x.orq.od.symbol]
-            self.cash += _p.close(x=x, y=self.contracts[x.orq.od.symbol])
-            if len(_p) == 0:
-                del self.positions[x.ls][x.orq.od.symbol]
-        self.orders[x.orq.id].append(x)
-        self._order_rtn(x.orq)
-
-    def on_canceled(self, x: td.Canceled):
-        self.orders[x.orq.id].cancel_nm = self.orders[x.orq.id].ing
-        self._order_rtn(x.orq)
-
-    def on_rejected(self, x: td.Rejected):
-        self.orders[x.orq.id].reject_nm = self.orders[x.orq.id].ing
-        self._order_rtn(x.orq)
-
-    def _order_rtn(self, x: td.OrderReq):
-        if self.orders[x.id].ok:
-            self.cash -= self.commissions[x.od.symbol].get(c=self.contracts[x.od.symbol], ts=self.orders[x.id])
-
-    def on_tick(self, x: md.Tick):
-        for i in self.positions.values():
-            if x.symbol in i:
-                i[x.symbol].price = x.price
-
-    def on_open(self, x: md.Open):
-        pass
-
-    def on_close(self, x: md.Close):
-        self.orders = {k: v for k, v in self.orders.items() if not v.ok}
-
-    def on_order_book(self, x: md.OrderBook):
-        pass
-
-    def on_cash(self, x: pa.Cash):
-        self.cash += x.num
-
-    def on_contract(self, x: pa.ContractMsg):
-        self.contracts[x.symbol] = x.cm
-
-    def on_commission(self, x: pa.CommissionMsg):
-        self.commissions[x.symbol] = x.cm
 
     pass

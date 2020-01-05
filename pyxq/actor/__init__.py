@@ -10,8 +10,9 @@ class GateWay(ba.Actor, itf.IMDRtn, itf.IOrderRsp):
     中间网关/代理服务：对接行情和交易
     """
     broker: cb.CallBackManager
+    acc: account.Account
 
-    def __init__(self, broker: cb.CallBackManager):
+    def __init__(self, acc: account.Account, broker: cb.CallBackManager):
         broker.bind(td.Trade.key, self.on_trade)
         broker.bind(td.Ordered.key, self.on_ordered)
         broker.bind(td.Canceled.key, self.on_canceled)
@@ -20,6 +21,7 @@ class GateWay(ba.Actor, itf.IMDRtn, itf.IOrderRsp):
         broker.bind(md.Close.key, self.on_close)
         broker.bind(md.Tick.key, self.on_tick)
         broker.bind(md.OrderBook.key, self.on_order_book)
+        self.acc = acc
         self.broker = broker
         pass
 
@@ -60,7 +62,7 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
     exchange: cb.CallBackManager
     acc: account.Account
 
-    def __init__(self, gateway: cb.CallBackManager, exchange: cb.CallBackManager):
+    def __init__(self, acc: account.Account, gateway: cb.CallBackManager, exchange: cb.CallBackManager):
         gateway.bind(td.OrderReq.key, self.on_order)
         gateway.bind(td.Cancel.key, self.on_cancel)
         exchange.bind(td.Ordered.key, self.on_ordered)
@@ -73,16 +75,16 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
         exchange.bind(md.OrderBook.key, self.on_order_book)
         self.gateway = gateway
         self.exchange = exchange
-        self.acc = account.Account()
+        self.acc = acc
 
     def on_cash(self, x: pa.Cash):
-        self.acc.on_cash(x=x)
+        self.acc.cash += x.num
 
     def on_commission(self, x: pa.CommissionMsg):
-        self.acc.on_commission(x=x)
+        self.acc.commissions[x.symbol] = x.cm
 
     def on_contract(self, x: pa.ContractMsg):
-        self.acc.on_contract(x=x)
+        self.acc.contracts[x.symbol] = x.cm
 
     def on_order(self, o: td.OrderReq):
         _od = o.od
@@ -96,12 +98,11 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
             ):
                 _x = False
         else:
-            if abs(self.acc.get_free(symbol=_od.symbol, ls=_od.ls)) < abs(_od.num):
+            if abs(self.acc.get_free_position(symbol=_od.symbol, ls=_od.ls)) < abs(_od.num):
                 _x = False
         if _x:
-            _ordered = td.Ordered(dt=o.dt, orq=o)
-            self.acc.on_ordered(x=_ordered)
-            self.gateway.route(x=_ordered)
+            self.acc.orders[o.id] = account.Order(orq=o)
+            self.gateway.route(x=td.Ordered(dt=o.dt, orq=o))
             self.exchange.route(x=o)
         else:
             self.gateway.route(x=td.Rejected(dt=o.dt, orq=o))
@@ -115,36 +116,52 @@ class Broker(ba.Actor, itf.IOrderReq, itf.IOrderRsp, itf.IPaReq, itf.IMDRtn):
         self.gateway.route(x=x)
 
     def on_canceled(self, x: td.Canceled):
-        self.acc.on_canceled(x=x)
+        self.acc.orders[x.orq.id].cancel_nm = self.acc.orders[x.orq.id].ing
+        self._on_order_rsp(x.orq)
         self.gateway.route(x=x)
 
     def on_rejected(self, x: td.Rejected):
-        self.acc.on_rejected(x=x)
+        self.acc.orders[x.orq.id].reject_nm = self.acc.orders[x.orq.id].ing
+        self._on_order_rsp(x.orq)
         self.gateway.route(x=x)
         pass
 
-    def on_trade(self, t: td.Trade):
-        self.acc.on_trade(t)
-        self.gateway.route(x=t)
+    def on_trade(self, x: td.Trade):
+        acc = self.acc
+        if x.orq.od.oc == cn.OC.O:
+            acc.positions[x.ls][x.orq.od.symbol].open(x=x)
+        else:
+            _p = acc.positions[x.ls][x.orq.od.symbol]
+            acc.cash += _p.close(x=x, y=acc.contracts[x.orq.od.symbol])
+            if len(_p) == 0:
+                del acc.positions[x.ls][x.orq.od.symbol]
+        acc.orders[x.orq.id].append(x)
+        self._on_order_rsp(x.orq)
+        self.gateway.route(x=x)
         pass
 
+    def _on_order_rsp(self, x: td.OrderReq):
+        acc = self.acc
+        if acc.orders[x.id].ok:
+            acc.cash -= acc.commissions[x.od.symbol].get(c=acc.contracts[x.od.symbol], ts=acc.orders[x.id])
+
     def on_open(self, x: md.Open):
-        self.acc.on_open(x=x)
         self.gateway.route(x=x)
         pass
 
     def on_close(self, x: md.Close):
-        self.acc.on_close(x=x)
+        self.acc.orders = {k: v for k, v in self.acc.orders.items() if not v.ok}
         self.gateway.route(x=x)
         pass
 
     def on_tick(self, x: md.Tick):
-        self.acc.on_tick(x=x)
+        for i in self.acc.positions.values():
+            if x.symbol in i:
+                i[x.symbol].price = x.price
         self.gateway.route(x)
         pass
 
     def on_order_book(self, x: md.OrderBook):
-        self.acc.on_order_book(x=x)
         self.gateway.route(x=x)
         pass
 
@@ -158,17 +175,34 @@ class Exchange(ba.Actor, itf.IOrderReq, itf.IMDRtn):
     broker: cb.CallBackManager
     # orders: tp.Deque[td.OrderReq]
     orders: tp.DefaultDict[str, tp.DefaultDict[cn.BS, tp.Deque[td.OrderReq]]]
+    ticks: tp.Dict[str, md.Tick]
 
     def __init__(self, broker: cb.CallBackManager):
         broker.bind(td.OrderReq.key, self.on_order)
         broker.bind(td.Cancel.key, self.on_cancel)
         self.broker = broker
-        # self.orders = deque()
         self.orders = defaultdict(lambda: defaultdict(deque))
+        self.ticks = dict()
+
+    def order_match(self, o: td.OrderReq, p: float):
+        _t = type(o.od)
+        if _t == td.Limit:
+            if (
+                (o.od.price >= p and o.od.bs == cn.BS.B) or
+                (o.od.price <= p and o.od.bs == cn.BS.S)
+            ):
+                self.broker.route(x=td.Trade(dt=o.dt, orq=o, price=p, num=o.od.num, ))
+            else:
+                self.orders[o.od.symbol][o.od.bs].append(o)
+        elif _t == td.Market:
+            self.broker.route(x=td.Trade(dt=o.dt, orq=o, price=p, num=o.od.num, ))
 
     def on_order(self, x: td.OrderReq):
         self.broker.route(td.Ordered(dt=x.dt, orq=x))
-        self.orders[x.od.symbol][x.od.bs].append(x)
+        if x.od.symbol in self.ticks:
+            self.order_match(o=x, p=self.ticks[x.od.symbol].price)
+        else:
+            self.orders[x.od.symbol][x.od.bs].append(x)
         pass
 
     def on_cancel(self, x: td.Cancel):
@@ -183,22 +217,12 @@ class Exchange(ba.Actor, itf.IOrderReq, itf.IMDRtn):
         pass
 
     def on_tick(self, x: md.Tick):
+        self.ticks[x.symbol] = x
         if x.symbol in self.orders:
-            for ls, v in self.orders[x.symbol].items():
-                _v = deque()
+            for bs, v in self.orders[x.symbol].items():
+                self.orders[x.symbol][bs] = deque()
                 for o in v:
-                    _t = type(o.od)
-                    if _t == td.Limit:
-                        if (
-                            (o.od.price >= x.price and ls == cn.BS.B) or
-                            (o.od.price <= x.price and ls == cn.BS.S)
-                        ):
-                            self.broker.route(x=td.Trade(dt=x.dt, orq=o, price=x.price, num=o.od.num, ))
-                        else:
-                            _v.append(o)
-                    elif _t == td.Market:
-                        self.broker.route(x=td.Trade(dt=x.dt, orq=o, price=x.price, num=o.od.num, ))
-                self.orders[x.symbol][ls] = _v
+                    self.order_match(o=o, p=x.price)
         self.broker.route(x)
         pass
 

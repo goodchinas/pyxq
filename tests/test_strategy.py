@@ -2,11 +2,13 @@ import typing as tp
 import unittest
 from datetime import date, datetime
 from os import path
+
 import numpy as np
 import pandas as pd
 
 from pyxq import cn, actor, cb
 from pyxq.msg import md, td, pa
+from pyxq.service import account
 
 
 class MaSignal(tp.Deque[float]):
@@ -33,8 +35,8 @@ class Strategy(actor.GateWay):
     signal: MaSignal
     cur_date: date
 
-    def __init__(self, broker: cb.CallBackManager):
-        super().__init__(broker=broker)
+    def __init__(self, acc: account.Account, broker: cb.CallBackManager):
+        super().__init__(acc=acc, broker=broker)
         self.signal = MaSignal(20)
         self.cur_date = date(year=1, month=1, day=1)
         pass
@@ -55,17 +57,20 @@ class Strategy(actor.GateWay):
             pass
 
     def on_trade(self, t: td.Trade):
-        print(self.__class__.__name__, t.orq.od.symbol, t.num, t.price)
-        pass
+        print(t)
+
+    def on_rejected(self, x: td.Rejected):
+        print(x)
 
     pass
 
 
 def run():
     # 构建框架
+    acc = account.Account()
     exchange = actor.Exchange(broker=cb.CallBackManager())
-    strategy = Strategy(broker=cb.CallBackManager())
-    broker = actor.Broker(gateway=strategy.broker, exchange=exchange.broker)
+    strategy = Strategy(acc=acc, broker=cb.CallBackManager())
+    broker = actor.Broker(acc=acc, gateway=strategy.broker, exchange=exchange.broker)
     # 配置
     cash, symbol = 100000, '000002'
     broker.on_cash(pa.Cash(num=cash, dt=datetime.now()))
@@ -97,8 +102,8 @@ def run():
         #     exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.low, volume=0))
 
         # exchange.on_tick(md.Tick(dt=_dt, symbol=symbol, price=d.close, volume=d.volume))
-        _a = broker.acc
-        print("权益:{:>10.2f} 可用:{:>10.2f} 保证:{:>10.2f} 冻结:{:>10.2f} 收益:{:>10.2f} 手续费:{:>5.1f} "
+        _a = acc
+        print("权益:{:>10.2f} 可用:{:>10.2f} 保证:{:>10.2f} 冻结:{:>10.2f} 收益:{:>10.2f} 手续费:{:>5.2f} "
               "开:{:>6.2f} 高:{:>6.2f} 低:{:>6.2f} 收:{:>6.2f}".format(
             _a.equity, _a.free, _a.margin, _a.frozen, _a.profit, _a.commission, d.open, d.high, d.low, d.close))
         exchange.on_close(md.Close(dt=_dt))
