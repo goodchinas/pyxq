@@ -24,13 +24,22 @@ class App(object):
     pass
 
 
+_uid = 0
+
+
+def uid():
+    global _uid
+    _uid += 1
+    return _uid
+
+
 @dc.dataclass
 class Msg(object):
     """
     消息
     """
     key: int = dc.field(default=None, init=False, repr=False)
-    id: str = dc.field(default_factory=lambda: str(uuid.uuid1()), init=False, repr=False)
+    id: str = dc.field(default_factory=lambda: str(uid()), init=False, repr=False)
     dt: datetime
 
     def __init_subclass__(cls, **kwargs):
