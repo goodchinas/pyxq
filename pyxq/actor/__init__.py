@@ -1,6 +1,9 @@
+"""
+the actor model.
+"""
 import typing as tp
-import abc
 from collections import deque, defaultdict
+
 from .. import ba, cb, itf, cn
 from ..msg import md, td, pa
 from ..service import account
