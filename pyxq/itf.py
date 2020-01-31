@@ -1,4 +1,5 @@
-from . import ba
+from . import ba, cb
+from .service import account
 from .msg import pa, md, td
 
 """
@@ -32,7 +33,10 @@ class IPaReq(ba.InterFace):
     def on_commission(self, x: pa.CommissionMsg):
         raise NotImplementedError
 
-    def on_contract(self, x: pa.ContractMsg):
+    def on_contract_new(self, x: pa.ContractNewMsg):
+        raise NotImplementedError
+
+    def on_contract_del(self, x: pa.ContractDelMsg):
         raise NotImplementedError
 
     def on_cash(self, x: pa.Cash):
@@ -50,4 +54,14 @@ class IMDRtn(ba.InterFace):
         raise NotImplementedError
 
     def on_close(self, x: md.Close):
+        raise NotImplementedError
+
+
+class IFactor(ba.InterFace):
+    def on_factor(self, x: md.Factor):
+        raise NotImplementedError
+
+
+class IGateWayInit(ba.InterFace):
+    def init(self, a: account.Account, center: cb.CallBackManager, broker: cb.CallBackManager):
         raise NotImplementedError

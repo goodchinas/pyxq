@@ -1,6 +1,6 @@
 import dataclasses as dc
+
 from .. import ba, cn
-import uuid
 
 
 class ILS(ba.InterFace):
@@ -16,14 +16,10 @@ class ILS(ba.InterFace):
 
 @dc.dataclass
 class OrderData(ba.Mod, ILS):
-    """
-    hello world
-    """
-    symbol: str
+    s: str
     oc: cn.OC
     price: float
     num: float
-    bid: str = dc.field(default=..., init=False, repr=False)  # broker id fro one more broker
 
     @property
     def ls(self) -> cn.LS:

@@ -10,7 +10,7 @@ from ..msg import td, pa
 class Position(ba.Service, tp.Deque[td.Trade]):
     price: float = dc.field(init=False, default=0)
 
-    def close(self, x: td.Trade, y: pa.ContractMod) -> float:
+    def close(self, x: td.Trade, y: pa.ContractNewMod) -> float:
         self.price = x.price
         _volume = x.num
         _profit = 0
@@ -56,7 +56,7 @@ class Account(ba.Service):
     the account service.
     """
     cash: float = dc.field(default=0, init=False)
-    contracts: tp.Dict[str, pa.ContractMod] = dc.field(default_factory=dict, init=False)
+    contracts: tp.Dict[str, pa.ContractNewMod] = dc.field(default_factory=dict, init=False)
     commissions: tp.Dict[str, pa.CommissionMod] = dc.field(default_factory=dict, init=False)
     orders: tp.Dict[str, Order] = dc.field(default_factory=dict, init=False)
     positions: tp.DefaultDict[cn.LS, tp.DefaultDict[str, Position]] = dc.field(
@@ -79,7 +79,7 @@ class Account(ba.Service):
     @property
     def frozen(self) -> float:
         return sum([
-            self.contracts[i.orq.od.symbol].get_margin(i.ing * i.orq.od.price)
+            self.contracts[i.orq.od.s].get_margin(i.ing * i.orq.od.price)
             for i in self.orders.values() if i.orq.od.oc == cn.OC.O
         ])
 
@@ -89,7 +89,7 @@ class Account(ba.Service):
 
     @property
     def free(self) -> float:
-        return self.cash - self.frozen - self.margin + self.profit
+        return max(self.cash - self.frozen - self.margin + self.profit, 0)
 
     @property
     def pv(self) -> float:
@@ -105,18 +105,18 @@ class Account(ba.Service):
     @property
     def commission(self) -> float:
         return sum([
-            self.commissions[i.orq.od.symbol].get(c=self.contracts[i.orq.od.symbol], ts=i)
+            self.commissions[i.orq.od.s].get(c=self.contracts[i.orq.od.s], ts=i)
             for i in self.orders.values() if i.ok
         ])
 
-    def get_free_position(self, symbol: str, ls: cn.LS) -> float:
+    def get_free_position(self, s: str, ls: cn.LS) -> float:
         return (
             sum([t.num
                  for _ls, ps in self.positions.items() if _ls == ls
-                 for _symbol, p in ps.items() if _symbol == symbol
+                 for _s, p in ps.items() if _s == s
                  for t in p]) -
-            sum([v.ing
-                 for k, v in self.orders.items() if k == symbol and not v.ok])
+            sum([o.ing
+                 for o in self.orders.values() if o.orq.od.s == s and not o.ok])
         )
 
     pass

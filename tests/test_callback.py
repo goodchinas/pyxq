@@ -54,7 +54,7 @@ class TestCallBack(TestCase):
         x = cb.CallBackManager()
         client = None
         server = None
-        for i in range(3):
+        for i in range(1):
             client = Client(x)
             server = Server(x)
         client.say('hi,i am client!')

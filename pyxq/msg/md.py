@@ -1,5 +1,6 @@
 import dataclasses as dc
-
+from collections import defaultdict
+import typing as tp
 from .. import ba, msg
 
 """
@@ -8,17 +9,14 @@ market data type.
 
 
 @dc.dataclass
-class Tick(msg.Symbol):
+class Tick(msg.S):
     price: float
     volume: float
     pass
 
 
 @dc.dataclass
-class OrderBook(msg.Symbol):
-    """
-    某一时刻，委买委卖列表队列
-    """
+class OrderBook(msg.S):
     pass
 
 
@@ -28,4 +26,10 @@ class Open(ba.Msg):
 
 
 class Close(ba.Msg):
+    pass
+
+
+@dc.dataclass
+class Factor(msg.S):
+    data: dict
     pass

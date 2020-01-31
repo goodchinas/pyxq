@@ -6,7 +6,22 @@ from ..msg import td
 
 
 @dc.dataclass
-class ContractMod(ba.Mod):
+class ContractNewMod(ba.Mod):
+
+    def get_margin(self, value: float) -> float:
+        raise NotImplementedError
+
+    def get_value(self, value: float) -> float:
+        raise NotImplementedError
+
+    def get_order_num(self, value: float, price: float) -> float:
+        raise NotImplementedError
+
+    pass
+
+
+@dc.dataclass
+class Contract(ContractNewMod):
     num_per_unit: float
     value_per_dot: float
     margin_ratio: float
@@ -17,15 +32,20 @@ class ContractMod(ba.Mod):
     def get_value(self, value: float):
         return value * self.value_per_dot
 
-    pass
+    def get_order_num(self, value: float, price: float) -> float:
+        return (value / self.margin_ratio / self.value_per_dot / price // self.num_per_unit) * self.num_per_unit
 
 
 @dc.dataclass
-class ContractMsg(msg.Symbol):
+class ContractNewMsg(msg.S):
     """
     be decided by the exchange.
     """
-    cm: ContractMod
+    cm: ContractNewMod
+
+
+class ContractDelMsg(msg.S):
+    pass
 
 
 @dc.dataclass
@@ -39,7 +59,7 @@ class Cash(ba.Msg):
 
 @dc.dataclass
 class CommissionMod(ba.Mod):
-    def get(self, c: ContractMod, ts: tp.Deque[td.Trade]):
+    def get(self, c: ContractNewMod, ts: tp.Deque[td.Trade]):
         raise NotImplementedError
 
     pass
@@ -49,7 +69,7 @@ class CommissionMod(ba.Mod):
 class CommissionFuture(CommissionMod):
     rate: float
 
-    def get(self, c: ContractMsg, ts: tp.Deque[td.Trade]) -> float:
+    def get(self, c: ContractNewMsg, ts: tp.Deque[td.Trade]) -> float:
         return sum((t.num for t in ts)) * self.rate
 
     pass
@@ -61,16 +81,16 @@ class CommissionStockA(CommissionMod):
     commission: float
     min_commission: float
 
-    def get(self, c: ContractMod, ts: tp.Deque[td.Trade]) -> float:
-        return sum([(abs(t.num) * t.price * c.value_per_dot * self.tax if t.num < 0 else 0) +
-                    max(self.min_commission, abs(t.num) * t.price * c.value_per_dot * self.commission)
+    def get(self, c: ContractNewMod, ts: tp.Deque[td.Trade]) -> float:
+        return sum([(c.get_value(abs(t.num) * t.price * self.tax) if t.num < 0 else 0) +
+                    max(self.min_commission, c.get_value(abs(t.num) * t.price) * self.commission)
                     for t in ts])
 
     pass
 
 
 @dc.dataclass
-class CommissionMsg(msg.Symbol):
+class CommissionMsg(msg.S):
     """
     be decided by broker.
     """
@@ -83,9 +103,8 @@ class SlippageMod(ba.Mod):
     """
     be decided by exchange.
     """
-    symbol: str
 
-    def get(self, c: ContractMod, o: td.OrderData, price):
+    def get(self, c: ContractNewMod, o: td.OrderData, price):
         raise NotImplementedError
 
 
@@ -93,7 +112,7 @@ class SlippageMod(ba.Mod):
 class SlippageFix(SlippageMod):
     step: float
 
-    def get(self, c: ContractMod, o: td.OrderData, price) -> float:
+    def get(self, c: ContractNewMod, o: td.OrderData, price) -> float:
         return price + (self.step if o.num > 0 else -self.step)
 
     pass
@@ -103,12 +122,12 @@ class SlippageFix(SlippageMod):
 class SlippagePer(SlippageMod):
     rate: float
 
-    def get(self, c: ContractMod, o: td.OrderData, price) -> float:
+    def get(self, c: ContractNewMod, o: td.OrderData, price) -> float:
         return price * (1 + self.rate * (1 if o.num > 0 else -1))
 
     pass
 
 
 @dc.dataclass
-class SlippageMsg(msg.Symbol):
+class SlippageMsg(msg.S):
     sm: SlippageMod

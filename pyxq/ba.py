@@ -46,7 +46,6 @@ class Msg(object):
         cls.key = hash(cls)
 
 
-@dc.dataclass
 class Mod(object):
     """
     数据模型

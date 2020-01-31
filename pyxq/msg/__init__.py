@@ -7,5 +7,5 @@ the message base type.
 
 
 @dc.dataclass
-class Symbol(ba.Msg):
-    symbol: str
+class S(ba.Msg):
+    s: str
