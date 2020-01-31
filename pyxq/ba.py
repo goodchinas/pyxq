@@ -1,14 +1,10 @@
 import dataclasses as dc
-import uuid
 from datetime import datetime
 
 """
 the base of project class.
 """
 
-
-# todo 多合约案例、绩效分析服务的实现
-# fixme hello world
 
 class Actor(object):
     """

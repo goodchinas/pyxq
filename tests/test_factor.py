@@ -1,16 +1,9 @@
-import itertools
 import unittest
-from collections import namedtuple
-from datetime import datetime
-
-import numpy as np
-import pandas as pd
 
 from pyxq import cn, actor, app
-from pyxq.msg import md, td, pa
+from pyxq.msg import md, td
 from tests import msg
-
-F = namedtuple(typename='F', field_names='x')
+from tests.msg import F
 
 
 class Strategy(actor.GateWay):

@@ -1,16 +1,12 @@
-import itertools
 import typing as tp
 import unittest
-from collections import namedtuple, defaultdict
-from datetime import datetime
+from collections import defaultdict
 
 import numpy as np
-import pandas as pd
 
 from pyxq import cn, actor, app
-from pyxq.msg import md, td, pa
+from pyxq.msg import md, td
 from tests import msg
-from tests.msg import F
 
 
 class MA(tp.Deque[float]):
