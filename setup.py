@@ -4,6 +4,7 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
+from os import path
 
 with open('README.MD') as readme_file:
     readme = readme_file.read()
@@ -14,7 +15,7 @@ with open('README.MD') as readme_file:
 
 
 def get_requirements(file):
-    with open(file) as f:
+    with open(path.join(path.dirname(path.realpath(__file__)), file)) as f:
         _r = [i for i in f.read().splitlines() if i and not i.startswith('#')]
     return _r
 
@@ -33,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     description="python quant is so easy.",
-    install_requires=get_requirements('requirements.txt'),
+    install_requires=[],
     license="MIT license",
     long_description_content_type="text/markdown",
     long_description=readme,  # + '\n\n' + history,
@@ -43,7 +44,7 @@ setup(
     packages=find_packages(include=['pyxq']),
     setup_requires=setup_requirements,
     test_suite='tests',
-    tests_require=get_requirements('requirements_test.txt'),
+    tests_require=['numpy','pandas'],
     url='https://github.com/goodchinas/pyxq',
     version='0.1.1',
     zip_safe=False,
