@@ -1,17 +1,16 @@
 language: python
 python:
-    - 3.7
+- 3.7
 install:
-    - pip install -U tox-travis
+- pip install -U tox-travis
 script: tox
 deploy:
-    provider: pypi
-    distributions: sdist bdist_wheel
-    user: goodchinas
-    password:
-        secure: Qw5XH0KeoKLXEdHDnbP3ZQa2+9NjtFLH9jxq2fkcc4XV/dwIaBQY1TWpy5SEMY3bz/V1BjaOe7toW5pheazpO/0Hn/6Aar2c4gAzhom7gbjNDr50EFPOWUam3vKfqDQaLWwEAY6zcZIFb1BaVApAYpIIyN+IxS8HHDxIbpKMg0rgCD0h2yhV46MOoTrdbSeaHPEwvWMzxRPA/eC+X1onUQrLjoq/JdAqc4udOKc3MFOtG7DkAP0eLjuSgM00P37nnANasYnzPJtAoj4ImiQ5v8fIRht9eKYpFIyaP12S/9Cy3zdNwDRyRhQubEmgPSuTlhtu4Q68gImFDCYnKkkcPsB6urs7hUZAnpiMu3beFeGi7UprUETppJHs0IQ4bZoHQeJA2nWvfyiAi9xoyuvPyjrVkkphYMXeAEeOjBo/6z2I+ydOrbgBheywIdgwrBToidmdbPePQxVRmNmIyZrDkqB1bXE7s0AtGQTTOj8ZjuwUGjdBHH6jI/arPZ+ytPf3EuWHhY2U+lN9d5LrjVHZ6x4l79bkyH+pHHUNN9PhqWQWBtcY08rVLug3NuIe9dXBtzG5CChnSmMy7UqPthLyuH9T5rWspJQlQalGdqdfSHp7jHlit4mGC2Nnep8hyI0iROqts7vGV47HKdmljd+J6LbmM1Adr/dPDug44pcEpek=
-    true:
-        tags: false
-        #    branch: master
-        repo: goodchinas/pyxq
-        python: 3.7
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: goodchinas
+  password:
+    secure: GC2mZ82FlZaEks9dpYJOEuC639MSp5jOvvQjspUcyXtBKYckrA1abTdZQJ1O5cWvyYJdlITTSqXBkqXWx8laI+nXiDmwez34QAG78sqQo05gC6irJAsH0GUlUmajSEM30sMpxjlW5+C8qWrIH/qJ+CQrgDTKMwBFF9zvwRwRmbPIuBfJPy14jDNLh8BfaWCer68SXWHn2Y+Qfs8Bbnk9FY33DC4LThzPPfzxS3wOzDcUb6uyXWbe/ubWYA/pHnFg8IDosLilQvWtasFRqHATTb+bazO0aUFlHpaLkvZ2fcUKCdd1DbFPJ7gFO1nsj2kSYiy3ldeb67cF6LchOGs8AJbwhYJRsAUe/pEWkUEnln1pSrrSbjWGZ35wf54A2CSSCUWfwZzLEMqJiRoUWRxsvVDLvHnNeTNErRTjropl6WeZz78XI9v4FX4IIqV4CBMNWDZ7zVttBVjdXIpsnfABHZE07fY+COliiHOHuZ0FPO0qozVvU2dJIGPa3q9d6iIQ3mwlvfnVKzLHPzYGhUxLgliAMAZyaZV0/YCshubxy4Q9qCBsUhFQR19BRWrpdizWVABQ+oD0/Pd9JtLhRmMRzw13GixO4r7WwkfFQVbnXgZqPqUe8Ab+WrCN3v32X8NHmHK07sI/W29eysNApr0x3CP1FcCaCg+cZAQ9HmFCe0k=
+  true:
+    tags: false
+    repo: goodchinas/pyxq
+    python: 3.7
