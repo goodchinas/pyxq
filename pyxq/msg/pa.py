@@ -1,6 +1,10 @@
+"""
+parameter message type.
+"""
 import dataclasses as dc
 import typing as tp
 
+from . import fa
 from .. import ba, msg
 from ..msg import td
 
@@ -37,14 +41,14 @@ class Contract(ContractNewMod):
 
 
 @dc.dataclass
-class ContractNewMsg(msg.S):
+class ContractNewMsg(fa.S):
     """
     be decided by the exchange.
     """
     cm: ContractNewMod
 
 
-class ContractDelMsg(msg.S):
+class ContractDelMsg(fa.S):
     pass
 
 
@@ -90,7 +94,7 @@ class CommissionStockA(CommissionMod):
 
 
 @dc.dataclass
-class CommissionMsg(msg.S):
+class CommissionMsg(fa.S):
     """
     be decided by broker.
     """
@@ -129,5 +133,5 @@ class SlippagePer(SlippageMod):
 
 
 @dc.dataclass
-class SlippageMsg(msg.S):
+class SlippageMsg(fa.S):
     sm: SlippageMod

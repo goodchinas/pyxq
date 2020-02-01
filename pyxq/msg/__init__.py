@@ -1,11 +1,3 @@
-import dataclasses as dc
-from .. import ba
-
 """
-the message base type.
+the message type.
 """
-
-
-@dc.dataclass
-class S(ba.Msg):
-    s: str

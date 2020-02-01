@@ -1,8 +1,11 @@
-import numpy as np, pandas as pd
-from datetime import datetime
-import itertools, copy
-from pyxq.msg import ba, md, pa
+import itertools
 from collections import namedtuple
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+from pyxq.msg import md, pa
 
 F = namedtuple(typename='F', field_names='x')
 

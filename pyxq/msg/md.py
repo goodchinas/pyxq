@@ -1,22 +1,21 @@
+"""
+market message type.
+"""
 import dataclasses as dc
-from collections import defaultdict
-import typing as tp
-from .. import ba, msg
 
-"""
-market data type.
-"""
+from . import fa
+from .. import ba
 
 
 @dc.dataclass
-class Tick(msg.S):
+class Tick(fa.S):
     price: float
     volume: float
     pass
 
 
 @dc.dataclass
-class OrderBook(msg.S):
+class OrderBook(fa.S):
     pass
 
 
@@ -30,6 +29,6 @@ class Close(ba.Msg):
 
 
 @dc.dataclass
-class Factor(msg.S):
+class Factor(fa.S):
     data: dict
     pass

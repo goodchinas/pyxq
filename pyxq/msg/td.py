@@ -1,3 +1,6 @@
+"""
+trade message type.
+"""
 import dataclasses as dc
 
 from .. import ba, cn

@@ -1,4 +1,4 @@
-from .. import ba, cb, actor, itf
+from .. import ba, cb, actor
 from ..service import account
 
 
