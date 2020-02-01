@@ -1,30 +1,16 @@
-# Config file for automatic testing at travis-ci.org
-
 language: python
 python:
-    - 3.7
-#  - 3.6
-#  - 3.5
-#  - 3.4
-
-# Command to install dependencies, callback.g. pip install -r requirements.txt --use-mirrors
+- 3.7
 install:
-    - pip install -U tox-travis
-
-# Command to run tests, callback.g. python setup.py test
+- pip install -U tox-travis
 script: tox
-
-# Assuming you have installed the travis-ci CLI tool, after you
-# create the Github repo and add it to Travis, run the
-# following command to finish PyPI deployment setup:
-# $ travis encrypt --add deploy.password
 deploy:
-    provider: pypi
-    distributions: sdist bdist_wheel
-    user: goodchinas
-    password:
-        secure: ev0EC9xUUEFich/cxirwjcSY+yOU4RIRtEKQb1dBhrbNi18s4XcqTOXzC8ZA5xHYOcbOu83o0K9t7gjLCLK2GoJ6ERjHXdXFvoBFXINouy0mtByZ5p+INEU2giIHqXQO0tpn/gVoR2hKEAti972pWs2d3rUQLUXwUtpGQozzr0edD4/EY7AyuCdC6Wacv2ON0J52Z9X58CgRqP3hWpyeMknWogqAl6jTLUYNcndFa+T3Phasb5EKTlITgbbEtUscGYTZ3ASL4GUR98DfTqlAGi2ne1PHqRqkkEDnFWQH1JsN5qHsKppFGFjBSyhlS0bYD6aEMR4aQs2H0VkeuM3uIgp1g+csOXLIvFywKEfV9sx19jz+QgwuZa3Fv6aNdxbBw/5vaeKDlMuwLrhFmrmvm5ZkkkQ7+kSTvnXlUvC0KvPvT6UT97IHr1ZjDizRB3tZXqGwXz5fj3ZnAauUrVKjCGlyzytkkTyFnxDQx7BUXoG8DmVbpvcIdcnDewD6OdJ2HSSlVWq87mJbe7UQxYa5fE9Bgezhpzp0iFz31j+12d1id9fnsvE43ZWYfnyyY9kAcPJIocmVU2sghwxTpIhXH8p4UHg0NEoXbh09djYiRZP/OTVNWCLoY6E5xJTNBmperS84rT/k1fFi2bkAfordQTILP02A7tOOH4lbdsOjc/I=
-    on:
-        tags: false
-        branch: master
-        python: 3.7
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: goodchinas
+  password:
+    secure: Qw5XH0KeoKLXEdHDnbP3ZQa2+9NjtFLH9jxq2fkcc4XV/dwIaBQY1TWpy5SEMY3bz/V1BjaOe7toW5pheazpO/0Hn/6Aar2c4gAzhom7gbjNDr50EFPOWUam3vKfqDQaLWwEAY6zcZIFb1BaVApAYpIIyN+IxS8HHDxIbpKMg0rgCD0h2yhV46MOoTrdbSeaHPEwvWMzxRPA/eC+X1onUQrLjoq/JdAqc4udOKc3MFOtG7DkAP0eLjuSgM00P37nnANasYnzPJtAoj4ImiQ5v8fIRht9eKYpFIyaP12S/9Cy3zdNwDRyRhQubEmgPSuTlhtu4Q68gImFDCYnKkkcPsB6urs7hUZAnpiMu3beFeGi7UprUETppJHs0IQ4bZoHQeJA2nWvfyiAi9xoyuvPyjrVkkphYMXeAEeOjBo/6z2I+ydOrbgBheywIdgwrBToidmdbPePQxVRmNmIyZrDkqB1bXE7s0AtGQTTOj8ZjuwUGjdBHH6jI/arPZ+ytPf3EuWHhY2U+lN9d5LrjVHZ6x4l79bkyH+pHHUNN9PhqWQWBtcY08rVLug3NuIe9dXBtzG5CChnSmMy7UqPthLyuH9T5rWspJQlQalGdqdfSHp7jHlit4mGC2Nnep8hyI0iROqts7vGV47HKdmljd+J6LbmM1Adr/dPDug44pcEpek=
+  true:
+    tags: false
+    branch: master
+    python: 3.7

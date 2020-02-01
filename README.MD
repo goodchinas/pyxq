@@ -1,8 +1,8 @@
 # pyxq
-![https://pypi.python.org/pypi/pyxq](https://img.shields.io/pypi/v/pyxq.svg)
-![https://travis-ci.org/goodchinas/pyxq](https://img.shields.io/travis/goodchinas/pyxq.svg)
-![https://pyxq.readthedocs.io/en/latest/?badge=latest](https://readthedocs.org/projects/pyxq/badge/?version=latest)
-![https://pyup.io/repos/github/goodchinas/pyxq/](https://pyup.io/repos/github/goodchinas/pyxq/shield.svg)
+[![pypi](https://img.shields.io/pypi/v/pyxq.svg)](https://pypi.python.org/pypi/pyxq)
+[![travis-ci](https://img.shields.io/travis/goodchinas/pyxq.svg)](https://travis-ci.org/goodchinas/pyxq)
+[![readthedocs](https://readthedocs.org/projects/pyxq/badge/?version=latest)](https://pyxq.readthedocs.io/en/latest/?badge=latest)
+<a href="https://pyup.io/repos/github/goodchinas/pyxq/"><img alt="pyup" src="https://pyup.io/repos/github/goodchinas/pyxq/shield.svg"></a>
 
 python quant is so easy.
 
