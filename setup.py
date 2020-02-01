@@ -47,6 +47,6 @@ setup(
     test_suite='tests',
     tests_require=['numpy', 'pandas'],
     url='https://github.com/goodchinas/pyxq',
-    version='0.1.1',
+    version='0.1.2',
     zip_safe=False,
 )
