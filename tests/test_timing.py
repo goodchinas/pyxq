@@ -85,10 +85,10 @@ class Strategy(actor.GateWay):
 
 
 def test0():
-    ap = app.A0(stg=Strategy(contract_num=len(msg.S)))
+    ap = app.A0(stg=Strategy(contract_num=len(msg.s)))
     list(ap.route(x=j) for i in msg.get_msg() for j in i)
     print(round(ap.a.equity, 2))
-    assert round(ap.a.equity, 2) == 1492087.31
+    assert round(ap.a.equity, 2) == 2063012.11
     return
 
 

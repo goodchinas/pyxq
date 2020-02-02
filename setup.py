@@ -13,7 +13,7 @@ with open('README.MD') as readme_file:
 # with open('HISTORY.rst') as history_file:
 #     history = history_file.read()
 
-
+# todo here
 def get_requirements(file):
     with open(path.join(path.dirname(path.realpath(__file__)), file)) as f:
         _r = [i for i in f.read().splitlines() if i and not i.startswith('#')]
@@ -42,11 +42,11 @@ setup(
     keywords='pyxq',
     name='pyxq',
     # packages=find_packages(include=['pyxq']),
-    packages=find_packages(),
+    packages=find_packages(where='.', exclude=(), include=("pyxq*",), ),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=['numpy', 'pandas'],
     url='https://github.com/goodchinas/pyxq',
-    version='0.1.2',
+    version='0.1.5',
     zip_safe=False,
 )

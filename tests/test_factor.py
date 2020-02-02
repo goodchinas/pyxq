@@ -21,7 +21,7 @@ class Strategy(actor.GateWay):
         self.today_last_ticks = {}
         self.buys = set()
         self.sells = set()
-        self.top = 5
+        self.top = 10
         self.ratio = 1
         self.period = 30
         self.days = 0
@@ -105,7 +105,7 @@ def test0():
     ap = app.A0(stg=Strategy())
     list(ap.route(x=j) for i in msg.get_msg() for j in i)
     print(round(ap.a.equity, 2))
-    assert round(ap.a.equity, 2) == 5216095.26
+    assert round(ap.a.equity, 2) == 7696159.92
     return
 
 
