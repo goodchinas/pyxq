@@ -1,6 +1,6 @@
 # pyxq
 [![pypi](https://img.shields.io/pypi/v/pyxq.svg)](https://pypi.python.org/pypi/pyxq)
-[![travis-ci](https://img.shields.io/travis/goodchinas/pyxq.svg)](https://travis-ci.org/goodchinas/pyxq)
+[![travis-ci](https://www.travis-ci.com/goodchinas/pyxq.svg?branch=master)](https://travis-ci.com/goodchinas/pyxq)
 [![readthedocs](https://readthedocs.org/projects/pyxq/badge/?version=latest)](https://pyxq.readthedocs.io/en/latest/?badge=latest)
 <a href="https://pyup.io/repos/github/goodchinas/pyxq/"><img alt="pyup" src="https://pyup.io/repos/github/goodchinas/pyxq/shield.svg"></a>
 
