@@ -1,5 +1,3 @@
-import unittest
-
 from pyxq import cn, actor, app
 from pyxq.msg import md, td
 from tests import msg
@@ -107,13 +105,3 @@ def test0():
     print(round(ap.a.equity, 2))
     assert round(ap.a.equity, 2) == 7696159.92
     return
-
-
-class TestService(unittest.TestCase):
-    def test_test0(self):
-        test0()
-        self.assertTrue(True)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,6 +1,6 @@
 import dataclasses as dc
-from unittest import TestCase
 from datetime import datetime
+
 import pyxq.ba
 from pyxq import cb as cb
 
@@ -29,7 +29,7 @@ class Server(object):
         print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
-        self.callback.route(ServerMsg(dt=datetime.now(),text=msg))
+        self.callback.route(ServerMsg(dt=datetime.now(), text=msg))
 
     pass
 
@@ -44,24 +44,17 @@ class Client(object):
         print(self.__class__.__name__, msg)
 
     def say(self, msg: str):
-        self.callback.route(ClientMsg(dt=datetime.now(),text=msg))
+        self.callback.route(ClientMsg(dt=datetime.now(), text=msg))
 
     pass
 
 
-class TestCallBack(TestCase):
-    def test_callback(self):
-        x = cb.CallBackManager()
-        client = None
-        server = None
-        for i in range(1):
-            client = Client(x)
-            server = Server(x)
-        client.say('hi,i am client!')
-        server.say('hi,i am server!')
-
-    pass
-
-
-if __name__ == '__main__':
-    pass
+def test_callback():
+    x = cb.CallBackManager()
+    client = None
+    server = None
+    for i in range(1):
+        client = Client(x)
+        server = Server(x)
+    client.say('hi,i am client!')
+    server.say('hi,i am server!')

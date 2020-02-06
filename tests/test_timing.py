@@ -1,5 +1,4 @@
 import typing as tp
-import unittest
 from collections import defaultdict
 
 import numpy as np
@@ -90,13 +89,3 @@ def test0():
     print(round(ap.a.equity, 2))
     assert round(ap.a.equity, 2) == 2063012.11
     return
-
-
-class TestService(unittest.TestCase):
-    def test_test0(self):
-        test0()
-        self.assertTrue(True)
-
-
-if __name__ == '__main__':
-    unittest.main()
