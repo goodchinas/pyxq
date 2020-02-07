@@ -1,16 +1,16 @@
 language: python
 python:
-- 3.7
+    - 3.7
 install:
-- pip install -U tox-travis
+    - pip install -U tox-travis
 script: tox
 deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: goodchinas
-  password:
-    secure: Zr3fdj2VZla+25d2qu6ANygbdoLlMtBNXtTxVuwmZ5qBTAvss9dR3vWN+VTG9xeQ7mkkrG5/mIHtbuODBa9BzMm3ut/Q1QTfDWu10UojX3uRg562sjo+AiBSo8vVwmoL9Wmbq1KTLCbBpIrdxc0LRtHDkAOCseCTVg+64QcGd0BJHuNIVxuz2JWgIuoedPGMAi1tfNDs6f/hfB6JCjlUIluA4hHEVw6k8O71eAdLZLEaEfmETu2fdBdFKtLtQi3wYgEqmvT3ImI8B3quGCmK2oYile1LW4D9VHun52K7HcjHqacvrbtFN94kwVqawk9N9DW65nTMWEHEYCKtyDEIaunxtv61EbEMKB26OFgIyR8WX1ukvBy4jkmkGacyx/3Jm9Q8hZGu0OsrriMqUqDsr1XXSb0t+X9mDUIrmjhMGTtqOdE/GBlsL0EG4wZbbl7ug2tBxNmTF+HwVwFg/Qes+8L7CN+hCrFg3yPCIAbw+kDFVltNhTOAx7B0D7mVpd4zkJKL2N9SvU2Xuhm2PeSBESu6XXVq0KYhO8o2tLesa9Ay+wP1P0LVm/X8+8PwrtMwrOzWR2vLEHvv7BkesCx6YW5kXkMwQOeIVehlUDfxWprZ9PQCwzIqIom1yCBWqkT96n5DJJWHQpxLdKYWgTG7clJMzFpqK33EgmSycsWw3c0=
-  true:
-    tags: false
-    branch: master
-    python: 3.7
+    provider: pypi
+    distributions: "sdist bdist_wheel"
+    skip_existing: true
+    user: $PYPI_USER
+    password: $PYPI_PASSWORD
+    true:
+        tags: false
+        branch: master
+        python: 3.7

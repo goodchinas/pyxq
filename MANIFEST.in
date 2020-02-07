@@ -1,10 +1,12 @@
-include AUTHORS.rst
-include CONTRIBUTING.rst
-include HISTORY.rst
-include LICENSE
-include README.MD
+# include  AUTHORS.rst CONTRIBUTING.rst HISTORY.rst LICENSE
+include README.MD requirements.txt
+include setup.py setup.cfg
 
-recursive-include tests *
+# see:https://setuptools.readthedocs.io/en/latest/setuptools.html#including-data-files
+# control when package.be good for command: python setup.py sdist
+recursive-include pyxq *
+# recursive-include tests *
+recursive-exclude tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
