@@ -102,6 +102,7 @@ class Strategy(actor.GateWay):
 def test0():
     ap = app.A0(stg=Strategy())
     list(ap.route(x=j) for i in msg.get_msg() for j in i)
+    print('\n')
     print(round(ap.a.equity, 2))
     assert round(ap.a.equity, 2) == 7696159.92
     return

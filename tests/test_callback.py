@@ -53,6 +53,7 @@ def test_callback():
     x = cb.CallBackManager()
     client = None
     server = None
+    print('\n')
     for i in range(1):
         client = Client(x)
         server = Server(x)
